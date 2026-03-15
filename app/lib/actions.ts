@@ -46,7 +46,7 @@ function countCardsFromHandText(hand: string): number {
 
 export async function createBodealerTask(
   _prevState: NewTaskState,
-  formData: FormData
+  formData: FormData,
 ): Promise<NewTaskState> {
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();

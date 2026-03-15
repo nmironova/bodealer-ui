@@ -1,4 +1,4 @@
-import NewBoardForm from './new-board.form';
+import NewBoardForm from "./new-board.form";
 
 export default function NewBoardPage() {
   return (

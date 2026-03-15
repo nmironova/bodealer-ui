@@ -1,4 +1,4 @@
-import DashboardTile from '../ui/dashboard-tile';
+import DashboardTile from "../ui/dashboard-tile";
 
 export default function DashboardPage() {
   return (
@@ -13,19 +13,19 @@ export default function DashboardPage() {
           href="/boards/new"
           title="New Board"
           description="Create a new calculation task."
-          icon={{ src: '/hearts.png', alt: 'Heart suit' }}
+          icon={{ src: "/hearts.png", alt: "Heart suit" }}
         />
         <DashboardTile
           href="/boards/running"
           title="Running Boards"
           description="See tasks in progress and queued."
-          icon={{ src: '/diamonds.png', alt: 'Diamonds suit' }}
+          icon={{ src: "/diamonds.png", alt: "Diamonds suit" }}
         />
         <DashboardTile
           href="/boards/completed"
           title="Completed Boards"
           description="Browse finished tasks and results."
-          icon={{ src: '/clubs.png', alt: 'Clubs suit' }}
+          icon={{ src: "/clubs.png", alt: "Clubs suit" }}
         />
       </div>
     </main>

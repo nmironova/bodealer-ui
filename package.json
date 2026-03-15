@@ -6,13 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prettify": "eslint --fix --quiet && prettier --write .",
+    "lint": "eslint --fix --quiet"
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "eslint-plugin-unicorn": "^63.0.0",
+    "eslint-plugin-unused-imports": "^4.4.1",
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3"

@@ -1,17 +1,23 @@
-'use client';
+"use client";
 
-import { useActionState } from 'react';
-import {Button} from '@/app/ui/button';
-import type { NewTaskState } from '@/app/lib/actions';
-import { createBodealerTask } from '@/app/lib/actions';
-import HandPicker from '@/app/ui/hand-picker';
+import { useActionState } from "react";
+import { Button } from "@/app/ui/button";
+import type { NewTaskState } from "@/app/lib/actions";
+import { createBodealerTask } from "@/app/lib/actions";
+import HandPicker from "@/app/ui/hand-picker";
 
 function FieldError({ errors }: { errors?: string[] }) {
   if (!errors?.length) return null;
-  return <p className="mt-2 text-sm text-red-700">{errors.join(' ')}</p>;
+  return <p className="mt-2 text-sm text-red-700">{errors.join(" ")}</p>;
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
@@ -22,49 +28,61 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function NewBoardForm() {
   const initialState: NewTaskState = { message: null, errors: {} };
-  const [state, formAction, pending] = useActionState(createBodealerTask, initialState);
+  const [state, formAction, pending] = useActionState(
+    createBodealerTask,
+    initialState,
+  );
 
   return (
     <form action={formAction} className="mt-6 space-y-4">
       <Section title="Board info">
-     <div className="space-y-4">
-      <div>
-      <label htmlFor="name" className="block text-sm font-medium text-gray-900">
-        Name
-      </label>
-      <input
-        id="name"
-        name="name"
-        type="text"
-        defaultValue=""
-        placeholder="For example: 4H slam try after weak two"
-        className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      <FieldError errors={state.errors.name} />
-    </div>
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-900"
+            >
+              Name
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              defaultValue=""
+              placeholder="For example: 4H slam try after weak two"
+              className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <FieldError errors={state.errors.name} />
+          </div>
 
-    <div>
-      <label htmlFor="description" className="block text-sm font-medium text-gray-900">
-        Description
-      </label>
-      <textarea
-        id="description"
-        name="description"
-        rows={3}
-        defaultValue=""
-        placeholder="Optional notes about the bidding, lead problem, assumptions, etc."
-        className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      <FieldError errors={state.errors.description} />
-    </div>
-  </div>
+          <div>
+            <label
+              htmlFor="description"
+              className="block text-sm font-medium text-gray-900"
+            >
+              Description
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              rows={3}
+              defaultValue=""
+              placeholder="Optional notes about the bidding, lead problem, assumptions, etc."
+              className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <FieldError errors={state.errors.description} />
+          </div>
+        </div>
       </Section>
 
       <Section title="Deal">
-        <label className="block text-sm font-medium text-gray-900">North hand</label>
-          <p className="mt-1 text-sm text-gray-600">
-            Click cards to build the hand. Example: <span className="font-mono">102 A1093 KJ2 A982</span>
-          </p>
+        <label className="block text-sm font-medium text-gray-900">
+          North hand
+        </label>
+        <p className="mt-1 text-sm text-gray-600">
+          Click cards to build the hand. Example:{" "}
+          <span className="font-mono">102 A1093 KJ2 A982</span>
+        </p>
 
         <div className="mt-3">
           <HandPicker />
@@ -74,7 +92,10 @@ export default function NewBoardForm() {
       </Section>
 
       <Section title="Run settings">
-        <label htmlFor="boardsK" className="block text-sm font-medium text-gray-900">
+        <label
+          htmlFor="boardsK"
+          className="block text-sm font-medium text-gray-900"
+        >
           Boards (thousands)
         </label>
 
@@ -104,7 +125,7 @@ export default function NewBoardForm() {
 
       <div className="flex items-center justify-end">
         <Button type="submit" disabled={pending}>
-          {pending ? 'Starting…' : 'Start'}
+          {pending ? "Starting…" : "Start"}
         </Button>
       </div>
     </form>
