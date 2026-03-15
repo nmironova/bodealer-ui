@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 export type NewTaskState = {
   message: string | null;
   errors: {
+    name?: string[];
+    description?: string[];
     hand?: string[];
     boardsK?: string[];
     general?: string[];
@@ -18,16 +20,57 @@ function toInt(value: FormDataEntryValue | null): number | null {
   return Math.trunc(n);
 }
 
+function countCardsFromHandText(hand: string): number {
+  const suits = hand.trim().split(/\s+/);
+  if (suits.length !== 4) return 0;
+
+  return suits.reduce((sum, suitText) => {
+    if (suitText === "-") return sum;
+
+    let i = 0;
+    let count = 0;
+
+    while (i < suitText.length) {
+      if (suitText.startsWith("10", i)) {
+        count += 1;
+        i += 2;
+      } else {
+        count += 1;
+        i += 1;
+      }
+    }
+
+    return sum + count;
+  }, 0);
+}
+
 export async function createBodealerTask(
   _prevState: NewTaskState,
   formData: FormData
 ): Promise<NewTaskState> {
+  const name = String(formData.get("name") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
   const hand = String(formData.get("hand") ?? "").trim();
   const boardsK = toInt(formData.get("boardsK"));
 
   const errors: NewTaskState["errors"] = {};
 
-  if (!hand) errors.hand = ["Hand is required."];
+  if (!name) {
+    errors.name = ["Name is required."];
+  } else if (name.length > 100) {
+    errors.name = ["Name must be at most 100 characters."];
+  }
+
+  if (description.length > 1000) {
+    errors.description = ["Description must be at most 1000 characters."];
+  }
+
+  if (!hand) {
+    errors.hand = ["Hand is required."];
+  } else if (countCardsFromHandText(hand) !== 13) {
+    errors.hand = ["Hand must contain exactly 13 cards."];
+  }
+
   if (boardsK == null) errors.boardsK = ["Boards must be a number."];
   else if (boardsK < 1 || boardsK > 200)
     errors.boardsK = ["Boards must be between 1 and 200."];
@@ -37,9 +80,12 @@ export async function createBodealerTask(
   }
 
   const payload = {
+    name,
+    description,
     deal: { handN: hand },
     settings: { boardsK },
   };
+  console.log("payload:", payload);
 
   let r: Response;
   try {

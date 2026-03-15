@@ -26,7 +26,41 @@ export default function NewBoardForm() {
 
   return (
     <form action={formAction} className="mt-6 space-y-4">
-      <Section title="Deal1">
+      <Section title="Board info">
+     <div className="space-y-4">
+      <div>
+      <label htmlFor="name" className="block text-sm font-medium text-gray-900">
+        Name
+      </label>
+      <input
+        id="name"
+        name="name"
+        type="text"
+        defaultValue=""
+        placeholder="For example: 4H slam try after weak two"
+        className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      <FieldError errors={state.errors.name} />
+    </div>
+
+    <div>
+      <label htmlFor="description" className="block text-sm font-medium text-gray-900">
+        Description
+      </label>
+      <textarea
+        id="description"
+        name="description"
+        rows={3}
+        defaultValue=""
+        placeholder="Optional notes about the bidding, lead problem, assumptions, etc."
+        className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      <FieldError errors={state.errors.description} />
+    </div>
+  </div>
+      </Section>
+
+      <Section title="Deal">
         <label className="block text-sm font-medium text-gray-900">North hand</label>
           <p className="mt-1 text-sm text-gray-600">
             Click cards to build the hand. Example: <span className="font-mono">102 A1093 KJ2 A982</span>
