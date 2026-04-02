@@ -1,38 +1,69 @@
 export type Suit = "S" | "H" | "D" | "C";
 export type Seat = "N" | "E" | "S" | "W";
+export type RelativeSeat = "partner" | "lho" | "rho";
+export type Strain = "S" | "H" | "D" | "C" | "NT";
 
-export type HandText = string; // v0: "102 A1093 KJ2 A982" (later parsed)
+export type HandText = string; // e.g. "102 A1093 KJ2 A982"
 
 export type Contract = {
   level: 1 | 2 | 3 | 4 | 5 | 6 | 7;
-  strain: Suit | "NT";
+  strain: Strain;
   declarer: Seat;
 };
 
-export type CalculationType =
-  | {
-      kind: "contract-chances";
-      contract: Contract;
-      // optional: vulnerability, doubling, etc later
-    }
-  | {
-      kind: "opening-lead";
-      contract: Contract; // usually 3NT etc
-    };
+export enum CalculationType {
+  CONTRACT_CHANCES = "contract-chance",
+  OPENING_LEAD = "opening-lead",
+  BEST_CONTRACT = "best-contract",
+}
 
-// The full config you send to Windows service
+export type RangeConstraint = {
+  min?: number;
+  max?: number;
+};
+
+export type SuitLengthConstraints = {
+  spades?: RangeConstraint;
+  hearts?: RangeConstraint;
+  diamonds?: RangeConstraint;
+  clubs?: RangeConstraint;
+};
+
+export type HandShapeConstraints = {
+  noSixCardSuit?: boolean;
+};
+
+export type PlayerRestrictions = {
+  hcp?: RangeConstraint;
+  suitLengths?: SuitLengthConstraints;
+  shape?: HandShapeConstraints;
+};
+
+export type RelativeSeatRestrictions = {
+  partner?: PlayerRestrictions;
+  lho?: PlayerRestrictions;
+  rho?: PlayerRestrictions;
+};
+
 export type TaskConfigDto = {
+  meta: {
+    name: string;
+    description?: string;
+  };
   deal: {
-    northHand: HandText;
-    // later:
-    // southHand?: HandText;
-    // eastHand?: HandText;
-    // westHand?: HandText;
-    // constraints?: {...}
+    fixedSeat: Seat; // for now always "N"
+    fixedHand: HandText; // for now north hand
+    restrictions?: RelativeSeatRestrictions;
   };
   settings: {
-    dealsK: number; // thousands, e.g. 10 => 10,000
+    dealsK: number; // e.g. 10 => 10,000
     seed?: number;
   };
-  calculation: CalculationType;
+  calculation: {
+    type: CalculationType;
+    targetContract?: {
+      level: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+      strain: Strain;
+    };
+  };
 };
