@@ -6,6 +6,8 @@ import {
   type PlayerRestrictions,
   type RangeConstraint,
   type RelativeSeatRestrictions,
+  type Seat,
+  type SuitLengthConstraints,
   type TaskConfigDto,
 } from "./dto/task-config";
 
@@ -207,6 +209,151 @@ function formDataToTaskConfigDto(
   };
 }
 
+function sanitizeFileName(value: string): string {
+  return value
+    .trim()
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "_")
+    .replace(/\s+/g, "_")
+    .slice(0, 80);
+}
+
+const RELATIVE_TO_ABSOLUTE: Record<
+  "partner" | "lho" | "rho",
+  Record<Seat, Seat>
+> = {
+  partner: { N: "S", S: "N", E: "W", W: "E" },
+  lho: { N: "E", E: "S", S: "W", W: "N" },
+  rho: { N: "W", W: "S", S: "E", E: "N" },
+};
+
+function resolveRelativeSeat(
+  baseSeat: Seat,
+  relative: "partner" | "lho" | "rho"
+): Seat {
+  return RELATIVE_TO_ABSOLUTE[relative][baseSeat];
+}
+
+function normalizeSuitText(suitText: string): string {
+  if (suitText === "-") return "";
+  return suitText.toUpperCase().replace(/10/g, "T");
+}
+
+function buildHandLine(seat: Seat, handText: string): string {
+  const parts = handText.trim().split(/\s+/);
+  if (parts.length !== 4) {
+    throw new Error(`Invalid hand text: "${handText}"`);
+  }
+
+  const [spades, hearts, diamonds, clubs] = parts.map(normalizeSuitText);
+  return `HAND: ${seat}:${spades}.${hearts}.${diamonds}.${clubs}`;
+}
+
+function buildPrimaryScorer(task: TaskConfigDto): string {
+  const target = task.calculation.targetContract;
+  if (!target) {
+    throw new Error("targetContract is required for CONTRACT_CHANCES");
+  }
+
+  const declarer = resolveRelativeSeat(task.deal.fixedSeat, "partner");
+  const strain = target.strain === "NT" ? "N" : target.strain;
+
+  return `PRIMARY SCORER: V${target.level}${strain} BY ${declarer}`;
+}
+
+function pushRangeFilter(
+  lines: string[],
+  seat: Seat,
+  filterName: string,
+  range: RangeConstraint | undefined,
+  defaults: { min: number; max: number }
+): void {
+  if (!range) return;
+
+  const min = range.min ?? defaults.min;
+  const max = range.max ?? defaults.max;
+
+  lines.push(`    ${seat}: ${filterName}, ${min}, ${max}`);
+}
+
+function pushSuitLengthFilters(
+  lines: string[],
+  seat: Seat,
+  suitLengths?: SuitLengthConstraints
+): void {
+  if (!suitLengths) return;
+
+  pushRangeFilter(lines, seat, "SpadesLen", suitLengths.spades, {
+    min: 0,
+    max: 13,
+  });
+  pushRangeFilter(lines, seat, "HeartsLen", suitLengths.hearts, {
+    min: 0,
+    max: 13,
+  });
+  pushRangeFilter(lines, seat, "DiamondsLen", suitLengths.diamonds, {
+    min: 0,
+    max: 13,
+  });
+  pushRangeFilter(lines, seat, "ClubsLen", suitLengths.clubs, {
+    min: 0,
+    max: 13,
+  });
+}
+
+function pushPlayerFilters(
+  lines: string[],
+  seat: Seat,
+  player?: PlayerRestrictions
+): void {
+  if (!player) return;
+
+  pushRangeFilter(lines, seat, "PointsRange", player.hcp, { min: 0, max: 37 });
+  pushSuitLengthFilters(lines, seat, player.suitLengths);
+
+  if (player.shape?.noSixCardSuit) {
+    lines.push(`    ${seat}: SpadesLen, 0, 5`);
+    lines.push(`    ${seat}: HeartsLen, 0, 5`);
+    lines.push(`    ${seat}: DiamondsLen, 0, 5`);
+    lines.push(`    ${seat}: ClubsLen, 0, 5`);
+  }
+}
+
+function buildWalrusConfig(task: TaskConfigDto): string {
+  const lines: string[] = [];
+
+  lines.push(`TASK NAME:${task.meta.name}`);
+
+  if (task.meta.description) {
+    for (const line of task.meta.description.split(/\r?\n/)) {
+      if (line.trim()) {
+        lines.push(line.trim());
+      }
+    }
+  }
+
+  lines.push("");
+  lines.push("TASK_TYPE:FIXED_ONE_HAND");
+  lines.push(buildHandLine(task.deal.fixedSeat, task.deal.fixedHand));
+  lines.push(buildPrimaryScorer(task));
+  lines.push("POSTMORTEM: AUTO");
+  lines.push("");
+  lines.push("FILTERS:");
+
+  const fixedSeat = task.deal.fixedSeat;
+  const partnerSeat = resolveRelativeSeat(fixedSeat, "partner");
+  const lhoSeat = resolveRelativeSeat(fixedSeat, "lho");
+  const rhoSeat = resolveRelativeSeat(fixedSeat, "rho");
+
+  pushPlayerFilters(lines, partnerSeat, task.deal.restrictions?.partner);
+  pushPlayerFilters(lines, lhoSeat, task.deal.restrictions?.lho);
+  pushPlayerFilters(lines, rhoSeat, task.deal.restrictions?.rho);
+
+  lines.push("");
+  lines.push(`SCALE: ${task.settings.dealsK}`);
+
+  return lines.join("\n");
+}
+
 export async function createBodealerTask(
   _prevState: NewTaskState,
   formData: FormData
@@ -255,19 +402,21 @@ export async function createBodealerTask(
     return { message: "Please fix the errors.", errors };
   }
 
-  const payload = formDataToTaskConfigDto(formData, hand);
-  console.log("payload:", payload);
+  const task = formDataToTaskConfigDto(formData, hand);
+  const configText = buildWalrusConfig(task);
 
   let r: Response;
   try {
+    const uploadFormData = new FormData();
+    uploadFormData.append(
+      "configFile",
+      new Blob([configText], { type: "text/plain" }),
+      `${sanitizeFileName(task.meta.name || "task")}.txt`
+    );
+
     r = await fetch(`${process.env.BODEALER_URL}/tasks`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": process.env.BODEALER_API_KEY ?? "",
-      },
-      body: JSON.stringify(payload),
-      cache: "no-store",
+      body: uploadFormData,
     });
   } catch (e) {
     return {
@@ -307,5 +456,6 @@ export async function createBodealerTask(
     };
   }
 
-  redirect(`/boards/${taskId}`);
+  console.log(taskId);
+  // TODO redirect(`/boards/${taskId}`);
 }
