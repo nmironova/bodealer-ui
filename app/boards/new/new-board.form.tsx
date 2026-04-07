@@ -288,7 +288,7 @@ export default function NewBoardForm() {
               placeholder="For example: 4H slam try after weak two"
               className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <FieldError errors={state.errors.name} />
+            <FieldError errors={state?.errors?.name} />
           </div>
 
           <div>
@@ -306,7 +306,7 @@ export default function NewBoardForm() {
               placeholder="Optional notes about the bidding, lead problem, assumptions, etc."
               className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <FieldError errors={state.errors.description} />
+            <FieldError errors={state?.errors?.description} />
           </div>
         </div>
       </CollapsibleSection>
@@ -321,7 +321,7 @@ export default function NewBoardForm() {
           <HandPicker />
         </div>
 
-        <FieldError errors={state.errors.hand} />
+        <FieldError errors={state?.errors?.hand} />
       </CollapsibleSection>
 
       <CollapsibleSection title="Restrictions" defaultOpen={false}>
@@ -357,13 +357,13 @@ export default function NewBoardForm() {
           <span className="text-sm text-gray-600">e.g. 10 = 10,000</span>
         </div>
 
-        <FieldError errors={state.errors.boardsK} />
+        <FieldError errors={state?.errors?.boardsK} />
       </Section>
 
-      {state.message ? (
+      {state?.message ? (
         <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800">
-          {state.message}
-          <FieldError errors={state.errors.general} />
+          {state?.message}
+          <FieldError errors={state?.errors?.general} />
         </div>
       ) : null}
 
