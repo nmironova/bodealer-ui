@@ -7,6 +7,11 @@ import {
   type TaskConfigDto,
 } from "./dto/task-config";
 
+export const ENABLED_CALCULATION_TYPES = new Set<CalculationType>([
+  CalculationType.ONE_SIDED_BIDDING_LEVEL,
+  CalculationType.SEEK_OPENING_LEAD,
+]);
+
 export function toInt(value: FormDataEntryValue | null): number | null {
   if (value == null) return null;
   const n = Number(String(value));
@@ -18,16 +23,17 @@ export function readCalculationType(
   formData: FormData,
 ): CalculationType | null {
   const raw = String(formData.get("taskType") ?? "");
+  return Object.values(CalculationType).includes(raw as CalculationType)
+    ? (raw as CalculationType)
+    : null;
+}
 
-  if (raw === CalculationType.ONE_SIDED_BIDDING_LEVEL) {
-    return CalculationType.ONE_SIDED_BIDDING_LEVEL;
-  }
-
-  if (raw === CalculationType.SEEK_OPENING_LEAD) {
-    return CalculationType.SEEK_OPENING_LEAD;
-  }
-
-  return null;
+export function isEnabledCalculationType(
+  calculationType: CalculationType | null,
+): calculationType is CalculationType {
+  return Boolean(
+    calculationType && ENABLED_CALCULATION_TYPES.has(calculationType),
+  );
 }
 
 export function readContractLevel(

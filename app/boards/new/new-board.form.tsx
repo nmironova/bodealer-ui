@@ -73,8 +73,25 @@ const RESTRICTION_RANGES = [
 ] as const;
 
 const TASK_TYPES = [
-  { value: "ONE_SIDED_BIDDING_LEVEL", label: "One-sided bidding level" },
-  { value: "SEEK_OPENING_LEAD", label: "Seek opening lead" },
+  { value: "FIXED_ONE_HAND", label: "Fixed one hand", enabled: false },
+  { value: "FOUR_HANDS_TASK", label: "Four hands task", enabled: false },
+  { value: "FILTERING_ONLY", label: "Filtering only", enabled: false },
+  {
+    value: "ONE_SIDED_BIDDING_LEVEL",
+    label: "One-sided bidding level",
+    enabled: true,
+  },
+  {
+    value: "ONE_SIDED_DENOMINATION",
+    label: "One-sided denomination",
+    enabled: false,
+  },
+  {
+    value: "COMPETITIVE_GENERIC",
+    label: "Competitive generic",
+    enabled: false,
+  },
+  { value: "SEEK_OPENING_LEAD", label: "Seek opening lead", enabled: true },
 ] as const;
 
 const CONTRACT_LEVELS = ["1", "2", "3", "4", "5", "6", "7"] as const;
@@ -283,8 +300,13 @@ export default function NewBoardForm() {
               className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
             >
               {TASK_TYPES.map((taskType) => (
-                <option key={taskType.value} value={taskType.value}>
+                <option
+                  key={taskType.value}
+                  value={taskType.value}
+                  disabled={!taskType.enabled}
+                >
                   {taskType.label}
+                  {taskType.enabled ? "" : " (not available yet)"}
                 </option>
               ))}
             </select>

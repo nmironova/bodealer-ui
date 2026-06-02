@@ -5,6 +5,7 @@ import {
   buildRestrictions,
   countCardsFromHandText,
   formDataToTaskConfigDto,
+  isEnabledCalculationType,
   readCalculationType,
   readContractLevel,
   readContractStrain,
@@ -75,6 +76,8 @@ export async function createBodealerTask(
 
   if (!calculationType) {
     errors.calculation = ["Task type is required."];
+  } else if (!isEnabledCalculationType(calculationType)) {
+    errors.calculation = ["This task type is not available yet."];
   } else if (!contractLevel || !contractStrain) {
     errors.calculation = ["Contract level and strain are required."];
   }
