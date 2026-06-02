@@ -3,6 +3,7 @@ import {
   type PlayerRestrictions,
   type RangeConstraint,
   type RelativeSeatRestrictions,
+  type Strain,
   type TaskConfigDto,
 } from "./dto/task-config";
 
@@ -11,6 +12,58 @@ export function toInt(value: FormDataEntryValue | null): number | null {
   const n = Number(String(value));
   if (!Number.isFinite(n)) return null;
   return Math.trunc(n);
+}
+
+export function readCalculationType(
+  formData: FormData,
+): CalculationType | null {
+  const raw = String(formData.get("taskType") ?? "");
+
+  if (raw === CalculationType.ONE_SIDED_BIDDING_LEVEL) {
+    return CalculationType.ONE_SIDED_BIDDING_LEVEL;
+  }
+
+  if (raw === CalculationType.SEEK_OPENING_LEAD) {
+    return CalculationType.SEEK_OPENING_LEAD;
+  }
+
+  return null;
+}
+
+export function readContractLevel(
+  formData: FormData,
+): NonNullable<TaskConfigDto["calculation"]["targetContract"]>["level"] | null {
+  const level = toInt(formData.get("contractLevel"));
+
+  if (
+    level === 1 ||
+    level === 2 ||
+    level === 3 ||
+    level === 4 ||
+    level === 5 ||
+    level === 6 ||
+    level === 7
+  ) {
+    return level;
+  }
+
+  return null;
+}
+
+export function readContractStrain(formData: FormData): Strain | null {
+  const raw = String(formData.get("contractStrain") ?? "");
+
+  if (
+    raw === "S" ||
+    raw === "H" ||
+    raw === "D" ||
+    raw === "C" ||
+    raw === "NT"
+  ) {
+    return raw;
+  }
+
+  return null;
 }
 
 export function countCardsFromHandText(hand: string): number {
@@ -39,7 +92,7 @@ export function countCardsFromHandText(hand: string): number {
 
 export function validatePlayerRestrictions(
   player: PlayerRestrictions | undefined,
-  label: string
+  label: string,
 ): string[] {
   if (!player) return [];
 
@@ -49,7 +102,7 @@ export function validatePlayerRestrictions(
     range: RangeConstraint | undefined,
     fieldName: string,
     minAllowed: number,
-    maxAllowed: number
+    maxAllowed: number,
   ) => {
     if (!range) return;
 
@@ -58,7 +111,7 @@ export function validatePlayerRestrictions(
       (range.min < minAllowed || range.min > maxAllowed)
     ) {
       errors.push(
-        `${label}: ${fieldName} min must be between ${minAllowed} and ${maxAllowed}`
+        `${label}: ${fieldName} min must be between ${minAllowed} and ${maxAllowed}`,
       );
     }
 
@@ -67,7 +120,7 @@ export function validatePlayerRestrictions(
       (range.max < minAllowed || range.max > maxAllowed)
     ) {
       errors.push(
-        `${label}: ${fieldName} max must be between ${minAllowed} and ${maxAllowed}`
+        `${label}: ${fieldName} max must be between ${minAllowed} and ${maxAllowed}`,
       );
     }
 
@@ -76,7 +129,9 @@ export function validatePlayerRestrictions(
       range.max !== undefined &&
       range.min > range.max
     ) {
-      errors.push(`${label}: ${fieldName} min cannot be greater than max`);
+      errors.push(
+        `${label}: ${fieldName} min (${range.min}) cannot be greater than max (${range.max})`,
+      );
     }
   };
 
@@ -91,12 +146,15 @@ export function validatePlayerRestrictions(
 
 function readOptionalNumber(
   formData: FormData,
-  key: string
+  key: string,
 ): number | undefined {
   const raw = formData.get(key);
-  if (raw === null || raw === "") return undefined;
+  if (raw === null) return undefined;
 
-  const value = Number(raw);
+  const normalized = String(raw).trim();
+  if (normalized === "") return undefined;
+
+  const value = Number(normalized);
   return Number.isFinite(value) ? value : undefined;
 }
 
@@ -111,7 +169,7 @@ function buildRange(min?: number, max?: number): RangeConstraint | undefined {
 
 function buildPlayerRestrictions(
   formData: FormData,
-  prefix: string
+  prefix: string,
 ): PlayerRestrictions | undefined {
   const hcpMin = readOptionalNumber(formData, `${prefix}.hcpMin`);
   const hcpMax = readOptionalNumber(formData, `${prefix}.hcpMax`);
@@ -151,7 +209,7 @@ function buildPlayerRestrictions(
 }
 
 export function buildRestrictions(
-  formData: FormData
+  formData: FormData,
 ): RelativeSeatRestrictions | undefined {
   const partner = buildPlayerRestrictions(formData, "partner");
   const lho = buildPlayerRestrictions(formData, "lho");
@@ -164,11 +222,15 @@ export function buildRestrictions(
 
 export function formDataToTaskConfigDto(
   formData: FormData,
-  fixedHand: string
+  fixedHand: string,
 ): TaskConfigDto {
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const boardsK = Number(formData.get("boardsK"));
+  const type =
+    readCalculationType(formData) ?? CalculationType.ONE_SIDED_BIDDING_LEVEL;
+  const level = readContractLevel(formData) ?? 4;
+  const strain = readContractStrain(formData) ?? "S";
 
   return {
     meta: {
@@ -184,10 +246,10 @@ export function formDataToTaskConfigDto(
       dealsK: boardsK,
     },
     calculation: {
-      type: CalculationType.CONTRACT_CHANCES,
+      type,
       targetContract: {
-        level: 4,
-        strain: "S",
+        level,
+        strain,
       },
     },
   };

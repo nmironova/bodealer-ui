@@ -1,4 +1,5 @@
 import type {
+  CalculationType,
   PlayerRestrictions,
   RangeConstraint,
   Seat,
@@ -24,7 +25,7 @@ const FILTER_SEAT_NAMES: Record<Seat, "NORTH" | "EAST" | "SOUTH" | "WEST"> = {
 
 function resolveRelativeSeat(
   baseSeat: Seat,
-  relative: "partner" | "lho" | "rho"
+  relative: "partner" | "lho" | "rho",
 ): Seat {
   return RELATIVE_TO_ABSOLUTE[relative][baseSeat];
 }
@@ -60,12 +61,16 @@ function buildPrimaryScorer(task: TaskConfigDto): string {
   return `PRIMARY SCORER: V${target.level}${strain} BY ${declarer}`;
 }
 
+function toWalrusTaskType(type: CalculationType): string {
+  return type;
+}
+
 function pushRangeFilter(
   lines: string[],
   seat: Seat,
   filterName: string,
   range: RangeConstraint | undefined,
-  defaults: { min: number; max: number }
+  defaults: { min: number; max: number },
 ): void {
   if (!range) return;
 
@@ -78,7 +83,7 @@ function pushRangeFilter(
 function pushSuitLengthFilters(
   lines: string[],
   seat: Seat,
-  suitLengths?: SuitLengthConstraints
+  suitLengths?: SuitLengthConstraints,
 ): void {
   if (!suitLengths) return;
 
@@ -103,7 +108,7 @@ function pushSuitLengthFilters(
 function pushNoSixCardSuitFilters(
   lines: string[],
   seat: Seat,
-  suitLengths?: SuitLengthConstraints
+  suitLengths?: SuitLengthConstraints,
 ): void {
   const suits: Array<{
     filterName: string;
@@ -122,12 +127,12 @@ function pushNoSixCardSuitFilters(
 
     if (min > 5) {
       throw new Error(
-        `Invalid restriction: ${toFilterSeatName(seat)} ${filterName} min ${min} conflicts with noSixCardSuit`
+        `Invalid restriction: ${toFilterSeatName(seat)} ${filterName} min ${min} conflicts with noSixCardSuit`,
       );
     }
 
     lines.push(
-      `    ${toFilterSeatName(seat)}: ${filterName}, ${min}, ${cappedMax}`
+      `    ${toFilterSeatName(seat)}: ${filterName}, ${min}, ${cappedMax}`,
     );
   }
 }
@@ -135,7 +140,7 @@ function pushNoSixCardSuitFilters(
 function pushPlayerFilters(
   lines: string[],
   seat: Seat,
-  player?: PlayerRestrictions
+  player?: PlayerRestrictions,
 ): void {
   if (!player) return;
 
@@ -168,7 +173,7 @@ export function buildWalrusConfig(task: TaskConfigDto): string {
   const lines: string[] = [];
 
   lines.push(`TASK NAME:${task.meta.name}`);
-  lines.push("TASK_TYPE:FIXED_ONE_HAND");
+  lines.push(`TASK_TYPE:${toWalrusTaskType(task.calculation.type)}`);
   lines.push("");
 
   pushDescription(lines, task);

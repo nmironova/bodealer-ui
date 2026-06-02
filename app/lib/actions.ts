@@ -1,11 +1,13 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { buildWalrusConfig } from "./walrus-config";
 import {
   buildRestrictions,
   countCardsFromHandText,
   formDataToTaskConfigDto,
+  readCalculationType,
+  readContractLevel,
+  readContractStrain,
   sanitizeFileName,
   toInt,
   validatePlayerRestrictions,
@@ -14,18 +16,38 @@ import {
 export type NewTaskState = {
   message: string | null;
   errors: Partial<
-    Record<"name" | "description" | "hand" | "boardsK" | "general", string[]>
+    Record<
+      "name" | "description" | "hand" | "boardsK" | "calculation" | "general",
+      string[]
+    >
   >;
+  values: Record<string, string>;
 };
+
+function formDataToValues(formData: FormData): Record<string, string> {
+  const values: Record<string, string> = {};
+
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === "string") {
+      values[key] = value;
+    }
+  }
+
+  return values;
+}
 
 export async function createBodealerTask(
   _prevState: NewTaskState | undefined,
-  formData: FormData
+  formData: FormData,
 ): Promise<NewTaskState | undefined> {
+  const values = formDataToValues(formData);
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const hand = String(formData.get("hand") ?? "").trim();
   const boardsK = toInt(formData.get("boardsK"));
+  const calculationType = readCalculationType(formData);
+  const contractLevel = readContractLevel(formData);
+  const contractStrain = readContractStrain(formData);
 
   const errors: NewTaskState["errors"] = {};
 
@@ -51,6 +73,12 @@ export async function createBodealerTask(
     errors.boardsK = ["Boards must be between 1 and 200."];
   }
 
+  if (!calculationType) {
+    errors.calculation = ["Task type is required."];
+  } else if (!contractLevel || !contractStrain) {
+    errors.calculation = ["Contract level and strain are required."];
+  }
+
   const restrictions = buildRestrictions(formData);
   const restrictionErrors = [
     ...validatePlayerRestrictions(restrictions?.partner, "Partner"),
@@ -63,7 +91,7 @@ export async function createBodealerTask(
   }
 
   if (Object.keys(errors).length > 0) {
-    return { message: "Please fix the errors.", errors };
+    return { message: "Please fix the errors.", errors, values };
   }
 
   const task = formDataToTaskConfigDto(formData, hand);
@@ -75,7 +103,7 @@ export async function createBodealerTask(
     uploadFormData.append(
       "configFile",
       new Blob([configText], { type: "text/plain" }),
-      `${sanitizeFileName(task.meta.name || "task")}.txt`
+      `${sanitizeFileName(task.meta.name || "task")}.txt`,
     );
 
     r = await fetch(`${process.env.BODEALER_URL}/tasks`, {
@@ -86,6 +114,7 @@ export async function createBodealerTask(
     return {
       message: "Failed to reach Bodealer service.",
       errors: { general: [e instanceof Error ? e.message : String(e)] },
+      values,
     };
   }
 
@@ -105,6 +134,7 @@ export async function createBodealerTask(
     return {
       message: "Bodealer service rejected the request.",
       errors: { general: [errorMessage] },
+      values,
     };
   }
 
@@ -117,6 +147,7 @@ export async function createBodealerTask(
     return {
       message: "Task created but no id returned.",
       errors: { general: ['Missing "id" in response.'] },
+      values,
     };
   }
 

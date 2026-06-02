@@ -12,9 +12,8 @@ export type Contract = {
 };
 
 export enum CalculationType {
-  CONTRACT_CHANCES = "contract-chance",
-  OPENING_LEAD = "opening-lead",
-  BEST_CONTRACT = "best-contract",
+  ONE_SIDED_BIDDING_LEVEL = "ONE_SIDED_BIDDING_LEVEL",
+  SEEK_OPENING_LEAD = "SEEK_OPENING_LEAD",
 }
 
 export type RangeConstraint = {

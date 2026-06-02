@@ -104,9 +104,15 @@ function parseHandText(text: string): HandState | null {
   };
 }
 
-export default function HandPicker() {
-  const [hand, setHand] = useState<HandState>(INITIAL_HAND);
-  const [handTextInput, setHandTextInput] = useState(handToText(INITIAL_HAND));
+export default function HandPicker({
+  defaultHandText,
+}: {
+  defaultHandText?: string;
+}) {
+  const initialHand = parseHandText(defaultHandText ?? "") ?? INITIAL_HAND;
+  const initialHandText = defaultHandText ?? handToText(INITIAL_HAND);
+  const [hand, setHand] = useState<HandState>(initialHand);
+  const [handTextInput, setHandTextInput] = useState(initialHandText);
   const [textError, setTextError] = useState<string | null>(null);
 
   const selectedCount = useMemo(
