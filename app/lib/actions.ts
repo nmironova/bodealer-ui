@@ -23,6 +23,7 @@ export type NewTaskState = {
     >
   >;
   values: Record<string, string>;
+  taskId?: string;
 };
 
 function formDataToValues(formData: FormData): Record<string, string> {
@@ -40,7 +41,7 @@ function formDataToValues(formData: FormData): Record<string, string> {
 export async function createBodealerTask(
   _prevState: NewTaskState | undefined,
   formData: FormData,
-): Promise<NewTaskState | undefined> {
+): Promise<NewTaskState> {
   const values = formDataToValues(formData);
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -154,6 +155,10 @@ export async function createBodealerTask(
     };
   }
 
-  console.log(taskId);
-  // redirect(`/boards/${taskId}`);
+  return {
+    message: "Board started.",
+    errors: {},
+    values,
+    taskId,
+  };
 }

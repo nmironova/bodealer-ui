@@ -180,7 +180,7 @@ export default function HandPicker({
         value={handTextInput.trim().toUpperCase()}
       />
 
-      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex-1">
             <label
@@ -195,7 +195,7 @@ export default function HandPicker({
               type="text"
               value={handTextInput}
               onChange={(e) => handleTextChange(e.target.value)}
-              className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 font-mono text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
 
             {textError ? (
@@ -210,16 +210,19 @@ export default function HandPicker({
 
           <div className="flex items-center gap-3 sm:pt-8">
             <span
-              className={`text-sm font-medium ${
-                selectedCount === 13 ? "text-green-700" : "text-gray-600"
-              }`}
+              className={[
+                "rounded-full border px-2.5 py-1 text-sm font-semibold",
+                selectedCount === 13
+                  ? "border-green-200 bg-green-50 text-green-700"
+                  : "border-gray-200 bg-gray-50 text-gray-600",
+              ].join(" ")}
             >
               {selectedCount}/13 cards
             </span>
             <button
               type="button"
               onClick={clearHand}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
             >
               Clear
             </button>
@@ -231,20 +234,20 @@ export default function HandPicker({
         {SUITS.map((suit) => (
           <div
             key={suit.key}
-            className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+            className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
           >
-            <div className="flex items-start gap-5">
-              <div className="flex w-8 items-center justify-center pt-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-50">
                 <Image
                   src={suit.icon}
                   alt={suit.key}
-                  width={24}
-                  height={24}
+                  width={22}
+                  height={22}
                   className="opacity-90"
                 />
               </div>
 
-              <div className="grid flex-1 grid-cols-4 gap-2 sm:grid-cols-7 lg:grid-cols-13">
+              <div className="grid flex-1 grid-cols-4 gap-1.5 sm:grid-cols-7 lg:[grid-template-columns:repeat(13,minmax(0,1fr))]">
                 {RANKS.map((rank) => {
                   const selected = hand[suit.key].includes(rank);
 
@@ -255,7 +258,7 @@ export default function HandPicker({
                       onClick={() => toggleCard(suit.key, rank)}
                       disabled={!selected && selectedCount >= 13}
                       className={[
-                        "rounded-xl border px-3 py-2 text-sm font-semibold transition",
+                        "h-9 rounded-md border px-2 text-sm font-semibold transition",
                         "disabled:cursor-not-allowed disabled:opacity-40",
                         selected
                           ? suit.color.includes("red")
@@ -273,10 +276,6 @@ export default function HandPicker({
           </div>
         ))}
       </div>
-
-      <p className="text-xs text-gray-500">
-        Example: <span className="font-mono">102 A1093 KJ2 A982</span>
-      </p>
     </div>
   );
 }
