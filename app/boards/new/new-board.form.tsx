@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useEffect } from "react";
 import type { NewTaskState } from "@/app/lib/actions";
 import { createBodealerTask } from "@/app/lib/actions";
 import { Button } from "@/app/ui/button";
@@ -118,6 +118,7 @@ const TASK_TYPES = [
 
 const CONTRACT_LEVELS = ["1", "2", "3", "4", "5", "6", "7"] as const;
 const CONTRACT_STRAINS = ["S", "H", "D", "C", "NT"] as const;
+const POSTMORTEM_MODES = ["AUTO", "SUIT"] as const;
 
 const STRAIN_LABELS: Record<(typeof CONTRACT_STRAINS)[number], string> = {
   S: "♠",
@@ -348,6 +349,88 @@ function RestrictionBlock({
 }
 
 function LogsPanel({ taskId }: { taskId: string }) {
+  const [taskStatus, setTaskStatus] = useState<{
+    isCompleted: boolean;
+    resultText?: string;
+    error?: string;
+  }>({ isCompleted: false });
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!taskId) return;
+
+    let intervalId: NodeJS.Timeout | null = null;
+    let failedAttempts = 0;
+    const MAX_FAILED_ATTEMPTS = 5;
+
+    // Immediately check status on mount, then poll every 2 seconds
+    const checkTaskStatus = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/tasks/${taskId}`);
+        const data = await res.json();
+        failedAttempts = 0; // Reset on successful request
+
+        if (res.ok) {
+          const status = data.status?.toLowerCase();
+          
+          // Stop polling if completed or failed
+          const shouldStop = status === "completed" || status === "failed";
+          
+          setTaskStatus({
+            isCompleted: status === "completed",
+            resultText: data.resultText,
+            error: data.error || (status === "failed" ? "Task failed" : undefined),
+          });
+
+          // Stop polling if completed or failed
+          if (shouldStop && intervalId) {
+            console.log(`Task ${status}, stopping polling`);
+            clearInterval(intervalId);
+            intervalId = null;
+          }
+        } else {
+          setTaskStatus({
+            isCompleted: false,
+            error: data.error || "Failed to fetch task status",
+          });
+        }
+      } catch (e) {
+        failedAttempts++;
+        const errorMsg = e instanceof Error ? e.message : "Error fetching task status";
+        
+        setTaskStatus({
+          isCompleted: false,
+          error: errorMsg,
+        });
+
+        // Stop polling after 5 failed attempts
+        if (failedAttempts >= MAX_FAILED_ATTEMPTS && intervalId) {
+          console.log(`Failed to connect ${MAX_FAILED_ATTEMPTS} times, stopping polling`);
+          clearInterval(intervalId);
+          intervalId = null;
+          setTaskStatus((prev) => ({
+            ...prev,
+            error: `Connection lost after ${MAX_FAILED_ATTEMPTS} attempts`,
+          }));
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkTaskStatus();
+
+    // Set up polling interval (2 seconds)
+    intervalId = setInterval(checkTaskStatus, 2000);
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [taskId]);
+
   return (
     <CollapsiblePanel
       title="Logs"
@@ -360,8 +443,15 @@ function LogsPanel({ taskId }: { taskId: string }) {
             <span className="text-sm font-semibold text-gray-950">
               Board started
             </span>
-            <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
-              Running
+            <span
+              className={[
+                "rounded-full border px-2 py-0.5 text-xs font-semibold",
+                taskStatus.isCompleted
+                  ? "border-green-200 bg-green-50 text-green-700"
+                  : "border-blue-200 bg-blue-50 text-blue-700",
+              ].join(" ")}
+            >
+              {taskStatus.isCompleted ? "Completed" : "Running"}
             </span>
           </div>
 
@@ -373,9 +463,21 @@ function LogsPanel({ taskId }: { taskId: string }) {
           </div>
         </div>
 
-        <div className="min-h-32 rounded-md border border-gray-200 bg-gray-950 p-3 font-mono text-xs text-gray-200">
-          <div className="text-green-300">task accepted</div>
-          <div className="mt-1 text-gray-400">waiting for logs...</div>
+        <div className="max-h-96 overflow-y-auto rounded-md border border-gray-200 bg-gray-950 p-3 font-mono text-xs text-gray-200">
+          {taskStatus.error ? (
+            <div className="text-red-400">Error: {taskStatus.error}</div>
+          ) : taskStatus.isCompleted && taskStatus.resultText ? (
+            <pre className="whitespace-pre-wrap break-words text-green-300">
+              {taskStatus.resultText}
+            </pre>
+          ) : (
+            <>
+              <div className="text-green-300">task accepted</div>
+              <div className="mt-1 text-gray-400">
+                {isLoading ? "checking status..." : "waiting for results..."}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </CollapsiblePanel>
@@ -404,245 +506,296 @@ export default function NewBoardForm() {
 
   const contractLevel = values.contractLevel ?? "4";
   const contractStrain = values.contractStrain ?? "S";
+  const submittedBoardName = state?.values.name?.trim();
+  const currentBoardName = values.name?.trim();
+  const pageTitle =
+    state?.taskId && submittedBoardName
+      ? submittedBoardName
+      : pending && currentBoardName
+        ? currentBoardName
+        : "New Board";
 
   return (
-    <form action={formAction} className="mt-6">
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-start">
-        <div className="space-y-5">
-          <CollapsiblePanel title="Board setup" defaultOpen={true}>
-            <div className="space-y-4">
-              <TextField
-                id="name"
-                name="name"
-                value={values.name ?? ""}
-                onValueChange={handleValueChange}
-                label="Name"
-                placeholder="For example: 4H slam try after weak two"
-              />
-              <FieldError errors={state?.errors?.name} />
+    <>
+      <div className="flex flex-col gap-2 border-b border-gray-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-950">{pageTitle}</h1>
+          <p className="mt-1 text-sm text-gray-600">
+            Build the hand, choose the calculation, and tune the deal filters.
+          </p>
+        </div>
+      </div>
 
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-900"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  rows={4}
-                  value={values.description ?? ""}
-                  onChange={(e) =>
-                    handleValueChange("description", e.target.value)
-                  }
-                  placeholder="Optional notes about bidding, lead problem, assumptions, etc."
-                  className="mt-2 w-full resize-y rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      <form action={formAction} className="mt-6">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-start">
+          <div className="space-y-5">
+            <CollapsiblePanel title="Board setup" defaultOpen={true}>
+              <div className="space-y-4">
+                <TextField
+                  id="name"
+                  name="name"
+                  value={values.name ?? ""}
+                  onValueChange={handleValueChange}
+                  label="Name"
+                  placeholder="For example: 4H slam try after weak two"
                 />
-                <FieldError errors={state?.errors?.description} />
+                <FieldError errors={state?.errors?.name} />
+
+                <div>
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-900"
+                  >
+                    Description
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    rows={4}
+                    value={values.description ?? ""}
+                    onChange={(e) =>
+                      handleValueChange("description", e.target.value)
+                    }
+                    placeholder="Optional notes about bidding, lead problem, assumptions, etc."
+                    className="mt-2 w-full resize-y rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                  <FieldError errors={state?.errors?.description} />
+                </div>
               </div>
-            </div>
-          </CollapsiblePanel>
+            </CollapsiblePanel>
 
-          <CollapsiblePanel title="Calculation" defaultOpen={true}>
-            <div className="space-y-5">
-              <div>
-                <label
-                  htmlFor="taskType"
-                  className="block text-sm font-medium text-gray-900"
-                >
-                  Task type
-                </label>
-                <select
-                  id="taskType"
-                  name="taskType"
-                  value={values.taskType ?? "ONE_SIDED_BIDDING_LEVEL"}
-                  onChange={(e) =>
-                    handleValueChange("taskType", e.target.value)
-                  }
-                  className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                >
-                  {TASK_TYPES.map((taskType) => (
-                    <option
-                      key={taskType.value}
-                      value={taskType.value}
-                      disabled={!taskType.enabled}
-                    >
-                      {taskType.label}
-                      {taskType.enabled ? "" : " (not available yet)"}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <CollapsiblePanel title="Calculation" defaultOpen={true}>
+              <div className="space-y-5">
+                <div>
+                  <label
+                    htmlFor="taskType"
+                    className="block text-sm font-medium text-gray-900"
+                  >
+                    Task type
+                  </label>
+                  <select
+                    id="taskType"
+                    name="taskType"
+                    value={values.taskType ?? "ONE_SIDED_BIDDING_LEVEL"}
+                    onChange={(e) =>
+                      handleValueChange("taskType", e.target.value)
+                    }
+                    className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  >
+                    {TASK_TYPES.map((taskType) => (
+                      <option
+                        key={taskType.value}
+                        value={taskType.value}
+                        disabled={!taskType.enabled}
+                      >
+                        {taskType.label}
+                        {taskType.enabled ? "" : " (not available yet)"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div>
-                <span className="block text-sm font-medium text-gray-900">
-                  Contract
-                </span>
-                <input
-                  type="hidden"
-                  name="contractLevel"
-                  value={contractLevel}
-                />
-                <input
-                  type="hidden"
-                  name="contractStrain"
-                  value={contractStrain}
-                />
+                <div>
+                  <span className="block text-sm font-medium text-gray-900">
+                    Contract
+                  </span>
+                  <input
+                    type="hidden"
+                    name="contractLevel"
+                    value={contractLevel}
+                  />
+                  <input
+                    type="hidden"
+                    name="contractStrain"
+                    value={contractStrain}
+                  />
 
-                <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                  <div className="grid grid-cols-7 gap-1">
-                    {CONTRACT_LEVELS.map((level) => {
-                      const active = contractLevel === level;
+                  <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    <div className="grid grid-cols-7 gap-1">
+                      {CONTRACT_LEVELS.map((level) => {
+                        const active = contractLevel === level;
 
-                      return (
-                        <button
-                          key={level}
-                          type="button"
-                          onClick={() =>
-                            handleValueChange("contractLevel", level)
-                          }
-                          className={[
-                            "h-9 rounded-md border text-sm font-semibold transition",
-                            active
-                              ? "border-blue-600 bg-blue-600 text-white shadow-sm"
-                              : "border-gray-200 bg-white text-gray-700 hover:border-gray-300",
-                          ].join(" ")}
-                        >
-                          {level}
-                        </button>
-                      );
-                    })}
-                  </div>
+                        return (
+                          <button
+                            key={level}
+                            type="button"
+                            onClick={() =>
+                              handleValueChange("contractLevel", level)
+                            }
+                            className={[
+                              "h-9 rounded-md border text-sm font-semibold transition",
+                              active
+                                ? "border-blue-600 bg-blue-600 text-white shadow-sm"
+                                : "border-gray-200 bg-white text-gray-700 hover:border-gray-300",
+                            ].join(" ")}
+                          >
+                            {level}
+                          </button>
+                        );
+                      })}
+                    </div>
 
-                  <div className="mt-2 grid grid-cols-5 gap-1">
-                    {CONTRACT_STRAINS.map((strain) => {
-                      const active = contractStrain === strain;
+                    <div className="mt-2 grid grid-cols-5 gap-1">
+                      {CONTRACT_STRAINS.map((strain) => {
+                        const active = contractStrain === strain;
 
-                      return (
-                        <button
-                          key={strain}
-                          type="button"
-                          onClick={() =>
-                            handleValueChange("contractStrain", strain)
-                          }
-                          className={[
-                            "h-10 rounded-md border bg-white text-sm font-semibold transition",
-                            active
-                              ? "border-blue-600 ring-2 ring-blue-100"
-                              : "border-gray-200 hover:border-gray-300",
-                            STRAIN_COLORS[strain],
-                          ].join(" ")}
-                        >
-                          {STRAIN_LABELS[strain]}
-                        </button>
-                      );
-                    })}
+                        return (
+                          <button
+                            key={strain}
+                            type="button"
+                            onClick={() =>
+                              handleValueChange("contractStrain", strain)
+                            }
+                            className={[
+                              "h-10 rounded-md border bg-white text-sm font-semibold transition",
+                              active
+                                ? "border-blue-600 ring-2 ring-blue-100"
+                                : "border-gray-200 hover:border-gray-300",
+                              STRAIN_COLORS[strain],
+                            ].join(" ")}
+                          >
+                            {STRAIN_LABELS[strain]}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <FieldError errors={state?.errors?.calculation} />
-          </CollapsiblePanel>
+              <FieldError errors={state?.errors?.calculation} />
+            </CollapsiblePanel>
 
-          <CollapsiblePanel title="Run" defaultOpen={true}>
-            <label
-              htmlFor="boardsK"
-              className="block text-sm font-medium text-gray-900"
+            <CollapsiblePanel title="Run" defaultOpen={true}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="boardsK"
+                    className="block text-sm font-medium text-gray-900"
+                  >
+                    Boards
+                  </label>
+
+                  <div className="mt-2 flex items-center gap-3">
+                    <input
+                      id="boardsK"
+                      name="boardsK"
+                      type="number"
+                      min={1}
+                      max={200}
+                      value={values.boardsK ?? "10"}
+                      onChange={(e) =>
+                        handleValueChange("boardsK", e.target.value)
+                      }
+                      className="h-10 w-28 rounded-md border border-gray-300 bg-white px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                    <span className="text-sm text-gray-600">thousands</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="postmortem"
+                    className="block text-sm font-medium text-gray-900"
+                  >
+                    Postmortem
+                  </label>
+                  <select
+                    id="postmortem"
+                    name="postmortem"
+                    value={values.postmortem ?? "AUTO"}
+                    onChange={(e) =>
+                      handleValueChange("postmortem", e.target.value)
+                    }
+                    className="mt-2 h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  >
+                    {POSTMORTEM_MODES.map((mode) => (
+                      <option key={mode} value={mode}>
+                        {mode}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <FieldError errors={state?.errors?.boardsK} />
+            </CollapsiblePanel>
+          </div>
+
+          <div className="space-y-5">
+            {state?.taskId ? <LogsPanel taskId={state.taskId} /> : null}
+            <CollapsiblePanel
+              title="Our hand"
+              defaultOpen={true}
+              className="border-gray-300 bg-gradient-to-b from-white to-gray-50"
             >
-              Boards
-            </label>
-
-            <div className="mt-2 flex items-center gap-3">
-              <input
-                id="boardsK"
-                name="boardsK"
-                type="number"
-                min={1}
-                max={200}
-                value={values.boardsK ?? "10"}
-                onChange={(e) => handleValueChange("boardsK", e.target.value)}
-                className="h-10 w-28 rounded-md border border-gray-300 bg-white px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              <HandPicker
+                key={values.hand ?? ""}
+                defaultHandText={values.hand}
               />
-              <span className="text-sm text-gray-600">thousands</span>
-            </div>
+              <FieldError errors={state?.errors?.hand} />
+            </CollapsiblePanel>
 
-            <FieldError errors={state?.errors?.boardsK} />
-          </CollapsiblePanel>
+            <CollapsibleSection
+              title="Restrictions"
+              defaultOpen={Boolean(state?.errors?.general)}
+            >
+              <div className="space-y-3">
+                <RestrictionBlock
+                  title="Partner"
+                  prefix="partner"
+                  values={values}
+                  onValueChange={handleValueChange}
+                  defaultOpen={Boolean(
+                    state?.errors?.general?.some((error) =>
+                      error.startsWith("Partner:"),
+                    ),
+                  )}
+                />
+                <RestrictionBlock
+                  title="LHO"
+                  prefix="lho"
+                  values={values}
+                  onValueChange={handleValueChange}
+                  defaultOpen={Boolean(
+                    state?.errors?.general?.some((error) =>
+                      error.startsWith("LHO:"),
+                    ),
+                  )}
+                />
+                <RestrictionBlock
+                  title="RHO"
+                  prefix="rho"
+                  values={values}
+                  onValueChange={handleValueChange}
+                  defaultOpen={Boolean(
+                    state?.errors?.general?.some((error) =>
+                      error.startsWith("RHO:"),
+                    ),
+                  )}
+                />
+              </div>
+            </CollapsibleSection>
+          </div>
         </div>
 
-        <div className="space-y-5">
-          {state?.taskId ? <LogsPanel taskId={state.taskId} /> : null}
+        {state?.message && !state.taskId ? (
+          <div className="mt-5 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-800 shadow-sm">
+            {state?.message}
+            <FieldError errors={state?.errors?.general} />
+          </div>
+        ) : null}
 
-          <CollapsiblePanel
-            title="Our hand"
-            defaultOpen={true}
-            className="border-gray-300 bg-gradient-to-b from-white to-gray-50"
+        <div className="sticky bottom-0 mt-5 flex items-center justify-end border-t border-gray-200 bg-white/90 py-4 backdrop-blur">
+          <Button
+            type="submit"
+            disabled={pending}
+            className="rounded-md px-5 py-2.5"
           >
-            <HandPicker key={values.hand ?? ""} defaultHandText={values.hand} />
-            <FieldError errors={state?.errors?.hand} />
-          </CollapsiblePanel>
-
-          <CollapsibleSection
-            title="Restrictions"
-            defaultOpen={Boolean(state?.errors?.general)}
-          >
-            <div className="space-y-3">
-              <RestrictionBlock
-                title="Partner"
-                prefix="partner"
-                values={values}
-                onValueChange={handleValueChange}
-                defaultOpen={Boolean(
-                  state?.errors?.general?.some((error) =>
-                    error.startsWith("Partner:"),
-                  ),
-                )}
-              />
-              <RestrictionBlock
-                title="LHO"
-                prefix="lho"
-                values={values}
-                onValueChange={handleValueChange}
-                defaultOpen={Boolean(
-                  state?.errors?.general?.some((error) =>
-                    error.startsWith("LHO:"),
-                  ),
-                )}
-              />
-              <RestrictionBlock
-                title="RHO"
-                prefix="rho"
-                values={values}
-                onValueChange={handleValueChange}
-                defaultOpen={Boolean(
-                  state?.errors?.general?.some((error) =>
-                    error.startsWith("RHO:"),
-                  ),
-                )}
-              />
-            </div>
-          </CollapsibleSection>
+            {pending ? "Starting…" : "Start"}
+          </Button>
         </div>
-      </div>
-
-      {state?.message && !state.taskId ? (
-        <div className="mt-5 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-800 shadow-sm">
-          {state?.message}
-          <FieldError errors={state?.errors?.general} />
-        </div>
-      ) : null}
-
-      <div className="sticky bottom-0 mt-5 flex items-center justify-end border-t border-gray-200 bg-white/90 py-4 backdrop-blur">
-        <Button
-          type="submit"
-          disabled={pending}
-          className="rounded-md px-5 py-2.5"
-        >
-          {pending ? "Starting…" : "Start"}
-        </Button>
-      </div>
-    </form>
+      </form>
+    </>
   );
 }

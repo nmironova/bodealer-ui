@@ -9,6 +9,7 @@ import {
   readCalculationType,
   readContractLevel,
   readContractStrain,
+  readPostmortemMode,
   sanitizeFileName,
   toInt,
   validatePlayerRestrictions,
@@ -50,6 +51,7 @@ export async function createBodealerTask(
   const calculationType = readCalculationType(formData);
   const contractLevel = readContractLevel(formData);
   const contractStrain = readContractStrain(formData);
+  const postmortem = readPostmortemMode(formData);
 
   const errors: NewTaskState["errors"] = {};
 
@@ -83,6 +85,13 @@ export async function createBodealerTask(
     errors.calculation = ["Contract level and strain are required."];
   }
 
+  if (!postmortem) {
+    errors.general = [
+      ...(errors.general ?? []),
+      "Postmortem setting is invalid.",
+    ];
+  }
+
   const restrictions = buildRestrictions(formData);
   const restrictionErrors = [
     ...validatePlayerRestrictions(restrictions?.partner, "Partner"),
@@ -91,7 +100,7 @@ export async function createBodealerTask(
   ];
 
   if (restrictionErrors.length > 0) {
-    errors.general = restrictionErrors;
+    errors.general = [...(errors.general ?? []), ...restrictionErrors];
   }
 
   if (Object.keys(errors).length > 0) {

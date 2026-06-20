@@ -1,6 +1,7 @@
 import {
   CalculationType,
   type PlayerRestrictions,
+  type PostmortemMode,
   type RangeConstraint,
   type RelativeSeatRestrictions,
   type Strain,
@@ -66,6 +67,16 @@ export function readContractStrain(formData: FormData): Strain | null {
     raw === "C" ||
     raw === "NT"
   ) {
+    return raw;
+  }
+
+  return null;
+}
+
+export function readPostmortemMode(formData: FormData): PostmortemMode | null {
+  const raw = String(formData.get("postmortem") ?? "");
+
+  if (raw === "AUTO" || raw === "SUIT") {
     return raw;
   }
 
@@ -233,6 +244,7 @@ export function formDataToTaskConfigDto(
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const boardsK = Number(formData.get("boardsK"));
+  const postmortem = readPostmortemMode(formData) ?? "AUTO";
   const type =
     readCalculationType(formData) ?? CalculationType.ONE_SIDED_BIDDING_LEVEL;
   const level = readContractLevel(formData) ?? 4;
@@ -250,6 +262,7 @@ export function formDataToTaskConfigDto(
     },
     settings: {
       dealsK: boardsK,
+      postmortem,
     },
     calculation: {
       type,

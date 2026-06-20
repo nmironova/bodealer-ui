@@ -180,7 +180,7 @@ export function buildWalrusConfig(task: TaskConfigDto): string {
 
   lines.push(buildHandLine(task.deal.fixedSeat, task.deal.fixedHand));
   lines.push(buildPrimaryScorer(task));
-  lines.push("POSTMORTEM: AUTO");
+  lines.push(`POSTMORTEM: ${task.settings.postmortem}`);
   lines.push("");
   lines.push("FILTERS:");
 

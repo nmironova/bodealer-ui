@@ -2,6 +2,7 @@ export type Suit = "S" | "H" | "D" | "C";
 export type Seat = "N" | "E" | "S" | "W";
 export type RelativeSeat = "partner" | "lho" | "rho";
 export type Strain = "S" | "H" | "D" | "C" | "NT";
+export type PostmortemMode = "AUTO" | "SUIT";
 
 export type HandText = string; // e.g. "102 A1093 KJ2 A982"
 
@@ -61,6 +62,7 @@ export type TaskConfigDto = {
   };
   settings: {
     dealsK: number; // e.g. 10 => 10,000
+    postmortem: PostmortemMode;
     seed?: number;
   };
   calculation: {
