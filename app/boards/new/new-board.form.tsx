@@ -1,9 +1,14 @@
 "use client";
 
-import { useActionState, useState, useEffect } from "react";
+import { useActionState, useCallback, useEffect, useState } from "react";
 import type { NewTaskState } from "@/app/lib/actions";
 import { createBodealerTask } from "@/app/lib/actions";
-import { Button } from "@/app/ui/button";
+import {
+  TASK_STATUS,
+  type TaskStatus,
+  type TaskStatusResponse,
+} from "@/app/lib/task-status";
+import { Button, ButtonVariant } from "@/app/ui/button";
 import HandPicker from "@/app/ui/hand-picker";
 
 function FieldError({ errors }: { errors?: string[] }) {
@@ -56,11 +61,13 @@ function CollapsiblePanel({
   children,
   defaultOpen = false,
   className = "",
+  contentClassName = "",
 }: {
   title: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
   className?: string;
+  contentClassName?: string;
 }) {
   return (
     <details
@@ -81,7 +88,7 @@ function CollapsiblePanel({
         </div>
       </summary>
 
-      <div className="mt-4">{children}</div>
+      <div className={["mt-4", contentClassName].join(" ")}>{children}</div>
     </details>
   );
 }
@@ -348,16 +355,25 @@ function RestrictionBlock({
   );
 }
 
-function LogsPanel({ taskId }: { taskId: string }) {
-  const [taskStatus, setTaskStatus] = useState<{
-    isCompleted: boolean;
-    resultText?: string;
-    error?: string;
-  }>({ isCompleted: false });
-  const [isLoading, setIsLoading] = useState(false);
+function LogsPanel({
+  taskId,
+  onStatusChange,
+}: {
+  taskId: string;
+  onStatusChange: (taskId: string, status: TaskStatus) => void;
+}) {
+  const [taskStatus, setTaskStatus] = useState<TaskStatusResponse>({
+    status: TASK_STATUS.RUNNING,
+  });
+  const [requestError, setRequestError] = useState<string>();
+  const [pollAttempt, setPollAttempt] = useState(0);
 
   useEffect(() => {
     if (!taskId) return;
+
+    setTaskStatus({ status: TASK_STATUS.RUNNING });
+    setRequestError(undefined);
+    onStatusChange(taskId, TASK_STATUS.RUNNING);
 
     let intervalId: NodeJS.Timeout | null = null;
     let failedAttempts = 0;
@@ -365,57 +381,51 @@ function LogsPanel({ taskId }: { taskId: string }) {
 
     // Immediately check status on mount, then poll every 2 seconds
     const checkTaskStatus = async () => {
-      setIsLoading(true);
+      setPollAttempt((currentAttempt) => currentAttempt + 1);
       try {
         const res = await fetch(`/api/tasks/${taskId}`);
-        const data = await res.json();
-        failedAttempts = 0; // Reset on successful request
+        const data = (await res.json()) as
+          | TaskStatusResponse
+          | { error?: string };
 
         if (res.ok) {
-          const status = data.status?.toLowerCase();
-          
-          // Stop polling if completed or failed
-          const shouldStop = status === "completed" || status === "failed";
-          
-          setTaskStatus({
-            isCompleted: status === "completed",
-            resultText: data.resultText,
-            error: data.error || (status === "failed" ? "Task failed" : undefined),
-          });
+          const status = data as TaskStatusResponse;
+          failedAttempts = 0;
+          setRequestError(undefined);
+          setTaskStatus(status);
+          onStatusChange(taskId, status.status);
 
-          // Stop polling if completed or failed
-          if (shouldStop && intervalId) {
-            console.log(`Task ${status}, stopping polling`);
+          // Stop polling when the task reaches a terminal state
+          if (status.status !== TASK_STATUS.RUNNING && intervalId) {
+            console.log(`Task ${status.status}, stopping polling`);
             clearInterval(intervalId);
             intervalId = null;
           }
         } else {
-          setTaskStatus({
-            isCompleted: false,
-            error: data.error || "Failed to fetch task status",
-          });
+          throw new Error(
+            "error" in data && data.error
+              ? data.error
+              : "Failed to fetch task status",
+          );
         }
       } catch (e) {
         failedAttempts++;
-        const errorMsg = e instanceof Error ? e.message : "Error fetching task status";
-        
-        setTaskStatus({
-          isCompleted: false,
-          error: errorMsg,
-        });
+        const errorMsg =
+          e instanceof Error ? e.message : "Error fetching task status";
+
+        setRequestError(errorMsg);
 
         // Stop polling after 5 failed attempts
         if (failedAttempts >= MAX_FAILED_ATTEMPTS && intervalId) {
-          console.log(`Failed to connect ${MAX_FAILED_ATTEMPTS} times, stopping polling`);
+          console.log(
+            `Failed to connect ${MAX_FAILED_ATTEMPTS} times, stopping polling`,
+          );
           clearInterval(intervalId);
           intervalId = null;
-          setTaskStatus((prev) => ({
-            ...prev,
-            error: `Connection lost after ${MAX_FAILED_ATTEMPTS} attempts`,
-          }));
+          setRequestError(
+            `Connection lost after ${MAX_FAILED_ATTEMPTS} attempts`,
+          );
         }
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -429,15 +439,16 @@ function LogsPanel({ taskId }: { taskId: string }) {
         clearInterval(intervalId);
       }
     };
-  }, [taskId]);
+  }, [onStatusChange, taskId]);
 
   return (
     <CollapsiblePanel
       title="Logs"
       defaultOpen={true}
-      className="border-blue-200 bg-blue-50/50"
+      className="h-auto min-h-20 min-w-80 max-w-[calc(100vw-2rem)] resize overflow-hidden border-blue-200 bg-blue-50/50 open:h-96 open:min-h-64"
+      contentClassName="h-[calc(100%-2rem)]"
     >
-      <div className="space-y-4">
+      <div className="flex h-full flex-col gap-4">
         <div className="rounded-md border border-blue-200 bg-white p-3">
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm font-semibold text-gray-950">
@@ -445,13 +456,29 @@ function LogsPanel({ taskId }: { taskId: string }) {
             </span>
             <span
               className={[
-                "rounded-full border px-2 py-0.5 text-xs font-semibold",
-                taskStatus.isCompleted
+                "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold",
+                taskStatus.status === TASK_STATUS.COMPLETED
                   ? "border-green-200 bg-green-50 text-green-700"
-                  : "border-blue-200 bg-blue-50 text-blue-700",
+                  : taskStatus.status === TASK_STATUS.FAILED
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : taskStatus.status === TASK_STATUS.CANCELLED
+                      ? "border-gray-300 bg-gray-100 text-gray-700"
+                      : "border-blue-200 bg-blue-50 text-blue-700",
               ].join(" ")}
             >
-              {taskStatus.isCompleted ? "Completed" : "Running"}
+              {taskStatus.status === TASK_STATUS.RUNNING ? (
+                <span
+                  aria-hidden="true"
+                  className="size-3 animate-spin rounded-full border-2 border-blue-200 border-t-blue-700"
+                />
+              ) : null}
+              {taskStatus.status === TASK_STATUS.COMPLETED
+                ? "Completed"
+                : taskStatus.status === TASK_STATUS.FAILED
+                  ? "Failed"
+                  : taskStatus.status === TASK_STATUS.CANCELLED
+                    ? "Cancelled"
+                    : "Running"}
             </span>
           </div>
 
@@ -463,10 +490,15 @@ function LogsPanel({ taskId }: { taskId: string }) {
           </div>
         </div>
 
-        <div className="max-h-96 overflow-y-auto rounded-md border border-gray-200 bg-gray-950 p-3 font-mono text-xs text-gray-200">
-          {taskStatus.error ? (
+        <div className="min-h-24 flex-1 overflow-auto rounded-md border border-gray-200 bg-gray-950 p-3 font-mono text-xs text-gray-200">
+          {requestError ? (
+            <div className="text-red-400">Error: {requestError}</div>
+          ) : taskStatus.status === TASK_STATUS.FAILED ? (
             <div className="text-red-400">Error: {taskStatus.error}</div>
-          ) : taskStatus.isCompleted && taskStatus.resultText ? (
+          ) : taskStatus.status === TASK_STATUS.CANCELLED ? (
+            <div className="text-gray-300">task cancelled</div>
+          ) : taskStatus.status === TASK_STATUS.COMPLETED &&
+            taskStatus.resultText ? (
             <pre className="whitespace-pre-wrap break-words text-green-300">
               {taskStatus.resultText}
             </pre>
@@ -474,7 +506,8 @@ function LogsPanel({ taskId }: { taskId: string }) {
             <>
               <div className="text-green-300">task accepted</div>
               <div className="mt-1 text-gray-400">
-                {isLoading ? "checking status..." : "waiting for results..."}
+                checking task status
+                {".".repeat(Math.max(1, pollAttempt))}
               </div>
             </>
           )}
@@ -491,6 +524,58 @@ export default function NewBoardForm() {
     initialState,
   );
   const [values, setValues] = useState<Record<string, string>>({});
+  const [reportedTask, setReportedTask] = useState<{
+    taskId: string;
+    status: TaskStatus;
+  }>();
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string>();
+
+  const handleTaskStatusChange = useCallback(
+    (taskId: string, status: TaskStatus) => {
+      setReportedTask({ taskId, status });
+    },
+    [],
+  );
+
+  const currentTaskStatus =
+    state?.taskId && reportedTask?.taskId === state.taskId
+      ? reportedTask.status
+      : state?.taskId
+        ? TASK_STATUS.RUNNING
+        : undefined;
+  const isTaskRunning = currentTaskStatus === TASK_STATUS.RUNNING;
+
+  async function handleCancelTask() {
+    if (!state?.taskId || !isTaskRunning) return;
+
+    setIsCancelling(true);
+    setCancelError(undefined);
+
+    try {
+      const res = await fetch(`/api/tasks/${state.taskId}`, {
+        method: "DELETE",
+      });
+      const data = (await res.json()) as
+        | TaskStatusResponse
+        | { error?: string };
+
+      if (!res.ok) {
+        throw new Error(
+          "error" in data && data.error ? data.error : "Failed to cancel task",
+        );
+      }
+
+      const status = data as TaskStatusResponse;
+      setReportedTask({ taskId: state.taskId, status: status.status });
+    } catch (error) {
+      setCancelError(
+        error instanceof Error ? error.message : "Failed to cancel task",
+      );
+    } finally {
+      setIsCancelling(false);
+    }
+  }
 
   function handleValueChange(name: string, value: string) {
     setValues((currentValues) => {
@@ -723,7 +808,12 @@ export default function NewBoardForm() {
           </div>
 
           <div className="space-y-5">
-            {state?.taskId ? <LogsPanel taskId={state.taskId} /> : null}
+            {state?.taskId ? (
+              <LogsPanel
+                taskId={state.taskId}
+                onStatusChange={handleTaskStatusChange}
+              />
+            ) : null}
             <CollapsiblePanel
               title="Our hand"
               defaultOpen={true}
@@ -786,13 +876,28 @@ export default function NewBoardForm() {
           </div>
         ) : null}
 
-        <div className="sticky bottom-0 mt-5 flex items-center justify-end border-t border-gray-200 bg-white/90 py-4 backdrop-blur">
+        {cancelError ? (
+          <p className="mt-3 text-sm text-red-700">{cancelError}</p>
+        ) : null}
+
+        <div className="sticky bottom-0 mt-5 flex items-center justify-end gap-3 border-t border-gray-200 bg-white/90 py-4 backdrop-blur">
+          {state?.taskId && isTaskRunning ? (
+            <Button
+              type="button"
+              variant={ButtonVariant.SECONDARY}
+              disabled={isCancelling}
+              onClick={handleCancelTask}
+              className="rounded-md px-5 py-2.5"
+            >
+              {isCancelling ? "Cancelling…" : "Cancel task"}
+            </Button>
+          ) : null}
           <Button
             type="submit"
-            disabled={pending}
+            disabled={pending || isTaskRunning || isCancelling}
             className="rounded-md px-5 py-2.5"
           >
-            {pending ? "Starting…" : "Start"}
+            {pending ? "Starting…" : state?.taskId ? "Run again" : "Start"}
           </Button>
         </div>
       </form>
