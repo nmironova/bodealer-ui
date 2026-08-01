@@ -11,6 +11,12 @@ function readStringProperty(value: unknown, property: string) {
   return typeof propertyValue === "string" ? propertyValue : undefined;
 }
 
+function readTaskResult(data: unknown): string | undefined {
+  return (
+    readStringProperty(data, "resultText") ?? readStringProperty(data, "result")
+  );
+}
+
 function normalizeTaskStatus(data: unknown): TaskStatusResponse | null {
   const status = readStringProperty(data, "status")?.toLowerCase();
 
@@ -18,11 +24,28 @@ function normalizeTaskStatus(data: unknown): TaskStatusResponse | null {
     return null;
   }
 
-  if (status === TASK_STATUS.COMPLETED) {
+  const resultText = readTaskResult(data);
+
+  // The Bodealer service can incorrectly mark a successfully spawned task as
+  // failed when its process handle is null. The calculation continues and the
+  // same task record eventually receives a result, so keep polling until then.
+  const isDetachedProcessError =
+    status === TASK_STATUS.FAILED &&
+    readStringProperty(data, "error") ===
+      "Cannot read properties of null (reading 'on')";
+
+  if (
+    status === TASK_STATUS.COMPLETED ||
+    (isDetachedProcessError && resultText)
+  ) {
     return {
-      status,
-      resultText: readStringProperty(data, "resultText"),
+      status: TASK_STATUS.COMPLETED,
+      resultText,
     };
+  }
+
+  if (isDetachedProcessError) {
+    return { status: TASK_STATUS.RUNNING };
   }
 
   if (status === TASK_STATUS.FAILED) {

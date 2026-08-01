@@ -309,12 +309,14 @@ function RestrictionBlock({
   prefix,
   values,
   onValueChange,
+  onClear,
   defaultOpen = false,
 }: {
   title: string;
   prefix: string;
   values: Record<string, string>;
   onValueChange: (name: string, value: string) => void;
+  onClear: (prefix: string) => void;
   defaultOpen?: boolean;
 }) {
   const shouldOpen = defaultOpen || hasSubmittedValues(values, prefix);
@@ -351,6 +353,17 @@ function RestrictionBlock({
       </summary>
 
       <div className="border-t border-gray-200 p-4 pt-3">
+        <div className="mb-3 flex justify-end">
+          <button
+            type="button"
+            onClick={() => onClear(prefix)}
+            disabled={!hasSubmittedValues(values, prefix)}
+            className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Clear restrictions
+          </button>
+        </div>
+
         <div className="space-y-2.5">
           {RESTRICTION_RANGES.map((field) => (
             <RangeRow
@@ -643,6 +656,36 @@ export default function NewBoardForm() {
     });
   }
 
+  function clearRestrictions(prefix: string) {
+    setValues((currentValues) =>
+      Object.fromEntries(
+        Object.entries(currentValues).filter(
+          ([key]) => !key.startsWith(`${prefix}.`),
+        ),
+      ),
+    );
+  }
+
+  function swapOpponentRestrictions() {
+    setValues((currentValues) => {
+      const nextValues = Object.fromEntries(
+        Object.entries(currentValues).filter(
+          ([key]) => !key.startsWith("lho.") && !key.startsWith("rho."),
+        ),
+      );
+
+      for (const [key, value] of Object.entries(currentValues)) {
+        if (key.startsWith("lho.")) {
+          nextValues[`rho.${key.slice("lho.".length)}`] = value;
+        } else if (key.startsWith("rho.")) {
+          nextValues[`lho.${key.slice("rho.".length)}`] = value;
+        }
+      }
+
+      return nextValues;
+    });
+  }
+
   const contractLevel = values.contractLevel ?? "4";
   const contractStrain = values.contractStrain ?? "S";
   const submittedBoardName = state?.values.name?.trim();
@@ -885,11 +928,25 @@ export default function NewBoardForm() {
               defaultOpen={Boolean(state?.errors?.general)}
             >
               <div className="space-y-3">
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={swapOpponentRestrictions}
+                    disabled={
+                      !hasSubmittedValues(values, "lho") &&
+                      !hasSubmittedValues(values, "rho")
+                    }
+                    className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Swap LHO ↔ RHO
+                  </button>
+                </div>
                 <RestrictionBlock
                   title="Partner"
                   prefix="partner"
                   values={values}
                   onValueChange={handleValueChange}
+                  onClear={clearRestrictions}
                   defaultOpen={Boolean(
                     state?.errors?.general?.some((error) =>
                       error.startsWith("Partner:"),
@@ -901,6 +958,7 @@ export default function NewBoardForm() {
                   prefix="lho"
                   values={values}
                   onValueChange={handleValueChange}
+                  onClear={clearRestrictions}
                   defaultOpen={Boolean(
                     state?.errors?.general?.some((error) =>
                       error.startsWith("LHO:"),
@@ -912,6 +970,7 @@ export default function NewBoardForm() {
                   prefix="rho"
                   values={values}
                   onValueChange={handleValueChange}
+                  onClear={clearRestrictions}
                   defaultOpen={Boolean(
                     state?.errors?.general?.some((error) =>
                       error.startsWith("RHO:"),
@@ -949,7 +1008,7 @@ export default function NewBoardForm() {
           <Button
             type="submit"
             disabled={pending || isTaskRunning || isCancelling}
-            className="rounded-md px-5 py-2.5"
+            className="rounded-md px-5 py-2.5 enabled:cursor-pointer"
           >
             {pending ? "Starting…" : state?.taskId ? "Run again" : "Start"}
           </Button>
