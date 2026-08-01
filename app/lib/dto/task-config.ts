@@ -34,6 +34,13 @@ export type SuitLengthConstraints = {
   clubs?: RangeConstraint;
 };
 
+export type SuitPointConstraints = {
+  spades?: RangeConstraint;
+  hearts?: RangeConstraint;
+  diamonds?: RangeConstraint;
+  clubs?: RangeConstraint;
+};
+
 export type HandShapeConstraints = {
   noSixCardSuit?: boolean;
 };
@@ -41,6 +48,7 @@ export type HandShapeConstraints = {
 export type PlayerRestrictions = {
   hcp?: RangeConstraint;
   suitLengths?: SuitLengthConstraints;
+  suitPoints?: SuitPointConstraints;
   shape?: HandShapeConstraints;
 };
 

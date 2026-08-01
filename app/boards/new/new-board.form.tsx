@@ -101,6 +101,23 @@ const RESTRICTION_RANGES = [
   { key: "clubs", label: "Clubs", symbol: "♣", min: 0, max: 13 },
 ] as const;
 
+const SUIT_POINT_RANGES = [
+  { key: "spadesPoints", label: "Spades points", symbol: "♠", min: 0, max: 10 },
+  { key: "heartsPoints", label: "Hearts points", symbol: "♥", min: 0, max: 10 },
+  {
+    key: "diamondsPoints",
+    label: "Diamonds points",
+    symbol: "♦",
+    min: 0,
+    max: 10,
+  },
+  { key: "clubsPoints", label: "Clubs points", symbol: "♣", min: 0, max: 10 },
+] as const;
+
+type RestrictionRange =
+  | (typeof RESTRICTION_RANGES)[number]
+  | (typeof SUIT_POINT_RANGES)[number];
+
 const TASK_TYPES = [
   { value: "FIXED_ONE_HAND", label: "Fixed one hand", enabled: false },
   { value: "FOUR_HANDS_TASK", label: "Four hands task", enabled: false },
@@ -184,7 +201,7 @@ function RangeRow({
   onValueChange,
 }: {
   prefix: string;
-  field: (typeof RESTRICTION_RANGES)[number];
+  field: RestrictionRange;
   minValue: string;
   maxValue: string;
   onValueChange: (name: string, value: string) => void;
@@ -203,7 +220,7 @@ function RangeRow({
           <span
             className={[
               "w-4 text-center text-base leading-none",
-              field.key === "hearts" || field.key === "diamonds"
+              field.key.startsWith("hearts") || field.key.startsWith("diamonds")
                 ? "text-red-600"
                 : "text-gray-950",
             ].join(" ")}
@@ -267,11 +284,24 @@ function restrictionSummary(values: Record<string, string>, prefix: string) {
     if (summary) chips.push(`${field.label} ${summary}`);
   }
 
+  for (const field of SUIT_POINT_RANGES) {
+    const summary = getRangeSummary(values, prefix, field.key);
+    if (summary) chips.push(`${field.symbol} points ${summary}`);
+  }
+
   if (values[`${prefix}.noSixCardSuit`] === "true") {
     chips.push("No 6+ suit");
   }
 
   return chips;
+}
+
+function hasSuitPointValues(values: Record<string, string>, prefix: string) {
+  return SUIT_POINT_RANGES.some(
+    (field) =>
+      values[`${prefix}.${field.key}Min`] ||
+      values[`${prefix}.${field.key}Max`],
+  );
 }
 
 function RestrictionBlock({
@@ -333,6 +363,30 @@ function RestrictionBlock({
             />
           ))}
         </div>
+
+        <details
+          open={hasSuitPointValues(values, prefix)}
+          className="group/suit-points mt-4 rounded-md border border-gray-200 bg-white"
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Points in suit
+            <span className="text-sm text-gray-400 transition-transform group-open/suit-points:rotate-180">
+              ⌄
+            </span>
+          </summary>
+          <div className="space-y-2.5 border-t border-gray-200 p-3">
+            {SUIT_POINT_RANGES.map((field) => (
+              <RangeRow
+                key={field.key}
+                prefix={prefix}
+                field={field}
+                minValue={values[`${prefix}.${field.key}Min`] ?? ""}
+                maxValue={values[`${prefix}.${field.key}Max`] ?? ""}
+                onValueChange={onValueChange}
+              />
+            ))}
+          </div>
+        </details>
 
         <label className="mt-4 flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900">
           <input

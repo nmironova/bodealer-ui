@@ -4,6 +4,7 @@ import type {
   RangeConstraint,
   Seat,
   SuitLengthConstraints,
+  SuitPointConstraints,
   TaskConfigDto,
 } from "./dto/task-config";
 
@@ -105,6 +106,34 @@ function pushSuitLengthFilters(
   });
 }
 
+function pushSuitPointFilters(
+  lines: string[],
+  seat: Seat,
+  suitPoints?: SuitPointConstraints,
+): void {
+  if (!suitPoints) return;
+
+  const suits: Array<{ code: string; range?: RangeConstraint }> = [
+    { code: "SPD", range: suitPoints.spades },
+    { code: "HRT", range: suitPoints.hearts },
+    { code: "DMD", range: suitPoints.diamonds },
+    { code: "CLB", range: suitPoints.clubs },
+  ];
+
+  for (const { code, range } of suits) {
+    if (range?.min !== undefined) {
+      lines.push(
+        `    ${toFilterSeatName(seat)}: PointsSuitAtLeast, ${code}, ${range.min}`,
+      );
+    }
+    if (range?.max !== undefined) {
+      lines.push(
+        `    ${toFilterSeatName(seat)}: PointsSuitLimit, ${code}, ${range.max}`,
+      );
+    }
+  }
+}
+
 function pushNoSixCardSuitFilters(
   lines: string[],
   seat: Seat,
@@ -145,6 +174,7 @@ function pushPlayerFilters(
   if (!player) return;
 
   pushRangeFilter(lines, seat, "PointsRange", player.hcp, { min: 0, max: 37 });
+  pushSuitPointFilters(lines, seat, player.suitPoints);
 
   if (player.shape?.noSixCardSuit) {
     pushNoSixCardSuitFilters(lines, seat, player.suitLengths);

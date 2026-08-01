@@ -157,6 +157,10 @@ export function validatePlayerRestrictions(
   checkRange(player.suitLengths?.hearts, "hearts", 0, 13);
   checkRange(player.suitLengths?.diamonds, "diamonds", 0, 13);
   checkRange(player.suitLengths?.clubs, "clubs", 0, 13);
+  checkRange(player.suitPoints?.spades, "spade points", 0, 10);
+  checkRange(player.suitPoints?.hearts, "heart points", 0, 10);
+  checkRange(player.suitPoints?.diamonds, "diamond points", 0, 10);
+  checkRange(player.suitPoints?.clubs, "club points", 0, 10);
 
   return errors;
 }
@@ -200,6 +204,39 @@ function buildPlayerRestrictions(
   const clubsMin = readOptionalNumber(formData, `${prefix}.clubsMin`);
   const clubsMax = readOptionalNumber(formData, `${prefix}.clubsMax`);
 
+  const spadesPointsMin = readOptionalNumber(
+    formData,
+    `${prefix}.spadesPointsMin`,
+  );
+  const spadesPointsMax = readOptionalNumber(
+    formData,
+    `${prefix}.spadesPointsMax`,
+  );
+  const heartsPointsMin = readOptionalNumber(
+    formData,
+    `${prefix}.heartsPointsMin`,
+  );
+  const heartsPointsMax = readOptionalNumber(
+    formData,
+    `${prefix}.heartsPointsMax`,
+  );
+  const diamondsPointsMin = readOptionalNumber(
+    formData,
+    `${prefix}.diamondsPointsMin`,
+  );
+  const diamondsPointsMax = readOptionalNumber(
+    formData,
+    `${prefix}.diamondsPointsMax`,
+  );
+  const clubsPointsMin = readOptionalNumber(
+    formData,
+    `${prefix}.clubsPointsMin`,
+  );
+  const clubsPointsMax = readOptionalNumber(
+    formData,
+    `${prefix}.clubsPointsMax`,
+  );
+
   const noSixCardSuit = readCheckbox(formData, `${prefix}.noSixCardSuit`);
 
   const hcp = buildRange(hcpMin, hcpMax);
@@ -212,15 +249,23 @@ function buildPlayerRestrictions(
   };
 
   const hasSuitLengths = Object.values(suitLengths).some(Boolean);
+  const suitPoints = {
+    spades: buildRange(spadesPointsMin, spadesPointsMax),
+    hearts: buildRange(heartsPointsMin, heartsPointsMax),
+    diamonds: buildRange(diamondsPointsMin, diamondsPointsMax),
+    clubs: buildRange(clubsPointsMin, clubsPointsMax),
+  };
+  const hasSuitPoints = Object.values(suitPoints).some(Boolean);
   const shape = noSixCardSuit ? { noSixCardSuit: true } : undefined;
 
-  if (!hcp && !hasSuitLengths && !shape) {
+  if (!hcp && !hasSuitLengths && !hasSuitPoints && !shape) {
     return undefined;
   }
 
   return {
     hcp,
     suitLengths: hasSuitLengths ? suitLengths : undefined,
+    suitPoints: hasSuitPoints ? suitPoints : undefined,
     shape,
   };
 }
