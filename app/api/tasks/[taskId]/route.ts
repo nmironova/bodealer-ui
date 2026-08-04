@@ -25,6 +25,7 @@ function normalizeTaskStatus(data: unknown): TaskStatusResponse | null {
   }
 
   const resultText = readTaskResult(data);
+  const logTail = readStringProperty(data, "logTail");
 
   // The Bodealer service can incorrectly mark a successfully spawned task as
   // failed when its process handle is null. The calculation continues and the
@@ -41,11 +42,12 @@ function normalizeTaskStatus(data: unknown): TaskStatusResponse | null {
     return {
       status: TASK_STATUS.COMPLETED,
       resultText,
+      logTail,
     };
   }
 
   if (isDetachedProcessError) {
-    return { status: TASK_STATUS.RUNNING };
+    return { status: TASK_STATUS.RUNNING, resultText, logTail };
   }
 
   if (status === TASK_STATUS.FAILED) {
@@ -59,7 +61,11 @@ function normalizeTaskStatus(data: unknown): TaskStatusResponse | null {
     return { status: TASK_STATUS.CANCELLED };
   }
 
-  return { status: TASK_STATUS.RUNNING };
+  return {
+    status: TASK_STATUS.RUNNING,
+    resultText,
+    logTail,
+  };
 }
 
 export async function DELETE(

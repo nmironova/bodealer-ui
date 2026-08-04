@@ -434,6 +434,9 @@ function LogsPanel({
   });
   const [requestError, setRequestError] = useState<string>();
   const [pollAttempt, setPollAttempt] = useState(0);
+  const hasLiveOutput =
+    taskStatus.status === TASK_STATUS.RUNNING ||
+    taskStatus.status === TASK_STATUS.COMPLETED;
 
   useEffect(() => {
     if (!taskId) return;
@@ -564,11 +567,38 @@ function LogsPanel({
             <div className="text-red-400">Error: {taskStatus.error}</div>
           ) : taskStatus.status === TASK_STATUS.CANCELLED ? (
             <div className="text-gray-300">task cancelled</div>
-          ) : taskStatus.status === TASK_STATUS.COMPLETED &&
-            taskStatus.resultText ? (
-            <pre className="whitespace-pre-wrap break-words text-green-300">
-              {taskStatus.resultText}
-            </pre>
+          ) : hasLiveOutput && (taskStatus.resultText || taskStatus.logTail) ? (
+            <div className="space-y-4">
+              {taskStatus.resultText ? (
+                <section>
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                    {taskStatus.status === TASK_STATUS.RUNNING
+                      ? "Calculation output (live)"
+                      : "Calculation output"}
+                  </div>
+                  <pre className="whitespace-pre-wrap break-words text-green-300">
+                    {taskStatus.resultText}
+                  </pre>
+                </section>
+              ) : null}
+
+              {taskStatus.logTail ? (
+                <section>
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                    Walrus log (latest)
+                  </div>
+                  <pre className="whitespace-pre-wrap break-words text-gray-300">
+                    {taskStatus.logTail}
+                  </pre>
+                </section>
+              ) : null}
+
+              {taskStatus.status === TASK_STATUS.RUNNING ? (
+                <div className="text-gray-500">
+                  Updating{`.${".".repeat(pollAttempt % 3)}`}
+                </div>
+              ) : null}
+            </div>
           ) : (
             <>
               <div className="text-green-300">task accepted</div>
