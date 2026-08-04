@@ -5,19 +5,16 @@ export default defineConfig({
 
   timeout: 30_000,
 
-  outputDir:  "artifacts/test-results/",
+  outputDir: "artifacts/test-results/",
 
-  reporter: [
-     ["list"],
-     ["html", { outputFolder: "artifacts/report" }],
-  ],
+  reporter: [["list"], ["html", { outputFolder: "artifacts/report" }]],
   expect: {
     timeout: 5000,
   },
 
   use: {
     baseURL: "http://localhost:3000",
-    headless: false,
+    headless: !!process.env.CI,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
