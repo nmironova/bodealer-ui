@@ -1,5 +1,7 @@
 import type {
   CalculationType,
+  AdvancedCombinationFilter,
+  CombinationSeat,
   PlayerRestrictions,
   RangeConstraint,
   Seat,
@@ -183,6 +185,62 @@ function pushPlayerFilters(
   }
 }
 
+function resolveCombinationSeat(fixedSeat: Seat, seat: CombinationSeat): Seat {
+  return resolveRelativeSeat(fixedSeat, seat);
+}
+
+function pushCombinations(
+  lines: string[],
+  fixedSeat: Seat,
+  combinations?: AdvancedCombinationFilter[],
+): void {
+  for (const combination of combinations ?? []) {
+    const owner = toFilterSeatName(
+      resolveCombinationSeat(fixedSeat, combination.seat),
+    );
+    if (combination.type === "anyInListBelow") {
+      lines.push(`    ${owner}: AnyInListBelow {`);
+      for (const filter of combination.filters) {
+        const seat = toFilterSeatName(
+          resolveCombinationSeat(fixedSeat, filter.seat),
+        );
+        lines.push(
+          `        ${seat}: ${filter.filter}, ${filter.min}, ${filter.max}`,
+        );
+      }
+      lines.push("    }");
+      continue;
+    }
+
+    lines.push(`    ${owner}: ExcludeCombination {`);
+    for (const filter of combination.filters) {
+      if (filter.type === "range") {
+        const seat = toFilterSeatName(
+          resolveCombinationSeat(fixedSeat, filter.seat),
+        );
+        lines.push(
+          `        ${seat}: ${filter.filter}, ${filter.min}, ${filter.max}`,
+        );
+        continue;
+      }
+      const groupSeat = toFilterSeatName(
+        resolveCombinationSeat(fixedSeat, filter.seat),
+      );
+      lines.push(`        ${groupSeat}: AnyInListBelow {`);
+      for (const child of filter.filters) {
+        const seat = toFilterSeatName(
+          resolveCombinationSeat(fixedSeat, child.seat),
+        );
+        lines.push(
+          `            ${seat}: ${child.filter}, ${child.min}, ${child.max}`,
+        );
+      }
+      lines.push("        }");
+    }
+    lines.push("    }");
+  }
+}
+
 function pushDescription(lines: string[], task: TaskConfigDto): void {
   const description = task.meta.description?.trim();
 
@@ -222,6 +280,7 @@ export function buildWalrusConfig(task: TaskConfigDto): string {
   pushPlayerFilters(lines, partnerSeat, task.deal.restrictions?.partner);
   pushPlayerFilters(lines, lhoSeat, task.deal.restrictions?.lho);
   pushPlayerFilters(lines, rhoSeat, task.deal.restrictions?.rho);
+  pushCombinations(lines, fixedSeat, task.deal.combinations);
 
   if (!task.deal.restrictions?.lho || !task.deal.restrictions?.rho) {
     lines.push("");

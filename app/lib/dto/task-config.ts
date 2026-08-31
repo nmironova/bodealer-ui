@@ -58,6 +58,40 @@ export type RelativeSeatRestrictions = {
   rho?: PlayerRestrictions;
 };
 
+export type WalrusRangeFilterName =
+  | "PointsRange"
+  | "ControlsRange"
+  | "SpadesLen"
+  | "HeartsLen"
+  | "DiamondsLen"
+  | "ClubsLen";
+
+export type CombinationSeat = RelativeSeat;
+
+export type CombinationRangeFilter = {
+  type: "range";
+  seat: CombinationSeat;
+  filter: WalrusRangeFilterName;
+  min: number;
+  max: number;
+};
+
+export type AnyInListBelowFilter = {
+  type: "anyInListBelow";
+  seat: CombinationSeat;
+  filters: CombinationRangeFilter[];
+};
+
+export type ExcludeCombinationFilter = {
+  type: "excludeCombination";
+  seat: CombinationSeat;
+  filters: Array<CombinationRangeFilter | AnyInListBelowFilter>;
+};
+
+export type AdvancedCombinationFilter =
+  | ExcludeCombinationFilter
+  | AnyInListBelowFilter;
+
 export type TaskConfigDto = {
   meta: {
     name: string;
@@ -67,6 +101,7 @@ export type TaskConfigDto = {
     fixedSeat: Seat; // for now always "N"
     fixedHand: HandText; // for now north hand
     restrictions?: RelativeSeatRestrictions;
+    combinations?: AdvancedCombinationFilter[];
   };
   settings: {
     dealsK: number; // e.g. 10 => 10,000

@@ -1,11 +1,16 @@
 import {
   CalculationType,
+  type AdvancedCombinationFilter,
+  type CombinationRangeFilter,
+  type CombinationSeat,
+  type ExcludeCombinationFilter,
   type PlayerRestrictions,
   type PostmortemMode,
   type RangeConstraint,
   type RelativeSeatRestrictions,
   type Strain,
   type TaskConfigDto,
+  type WalrusRangeFilterName,
 } from "./dto/task-config";
 
 export const ENABLED_CALCULATION_TYPES = new Set<CalculationType>([
@@ -270,6 +275,133 @@ function buildPlayerRestrictions(
   };
 }
 
+const COMBINATION_SEATS = new Set<CombinationSeat>(["partner", "lho", "rho"]);
+const COMBINATION_FILTERS = new Set<WalrusRangeFilterName>([
+  "PointsRange",
+  "ControlsRange",
+  "SpadesLen",
+  "HeartsLen",
+  "DiamondsLen",
+  "ClubsLen",
+]);
+
+function readCombinationRangeFilter(
+  value: unknown,
+): CombinationRangeFilter | null {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as Record<string, unknown>;
+  const seat = candidate.seat as CombinationSeat;
+  const filter = candidate.filter as WalrusRangeFilterName;
+  const min = Number(candidate.min);
+  const max = Number(candidate.max);
+
+  if (
+    candidate.type !== "range" ||
+    !COMBINATION_SEATS.has(seat) ||
+    !COMBINATION_FILTERS.has(filter) ||
+    !Number.isInteger(min) ||
+    !Number.isInteger(max)
+  ) {
+    return null;
+  }
+
+  return { type: "range", seat, filter, min, max };
+}
+
+export function readCombinations(
+  formData: FormData,
+): AdvancedCombinationFilter[] {
+  const raw = String(formData.get("combinations") ?? "").trim();
+  if (!raw) return [];
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+
+  const combinations: AdvancedCombinationFilter[] = [];
+  for (const value of parsed) {
+    if (!value || typeof value !== "object") continue;
+    const candidate = value as Record<string, unknown>;
+    const seat = candidate.seat as CombinationSeat;
+    if (!COMBINATION_SEATS.has(seat) || !Array.isArray(candidate.filters))
+      continue;
+
+    if (candidate.type === "anyInListBelow") {
+      const filters = candidate.filters
+        .map(readCombinationRangeFilter)
+        .filter((item): item is CombinationRangeFilter => item !== null);
+      if (filters.length > 0) {
+        combinations.push({ type: "anyInListBelow", seat, filters });
+      }
+      continue;
+    }
+
+    if (candidate.type !== "excludeCombination") continue;
+
+    const filters: ExcludeCombinationFilter["filters"] = [];
+    for (const child of candidate.filters) {
+      const range = readCombinationRangeFilter(child);
+      if (range) {
+        filters.push(range);
+        continue;
+      }
+      if (!child || typeof child !== "object") continue;
+      const group = child as Record<string, unknown>;
+      const groupSeat = group.seat as CombinationSeat;
+      if (
+        group.type !== "anyInListBelow" ||
+        !COMBINATION_SEATS.has(groupSeat) ||
+        !Array.isArray(group.filters)
+      )
+        continue;
+      const groupFilters = group.filters
+        .map(readCombinationRangeFilter)
+        .filter((item): item is CombinationRangeFilter => item !== null);
+      if (groupFilters.length > 0) {
+        filters.push({
+          type: "anyInListBelow",
+          seat: groupSeat,
+          filters: groupFilters,
+        });
+      }
+    }
+    if (filters.length > 0) {
+      combinations.push({ type: "excludeCombination", seat, filters });
+    }
+  }
+  return combinations;
+}
+
+export function validateCombinations(
+  combinations: AdvancedCombinationFilter[],
+): string[] {
+  const errors: string[] = [];
+  const validateRange = (range: CombinationRangeFilter) => {
+    const maximum =
+      range.filter === "PointsRange"
+        ? 37
+        : range.filter === "ControlsRange"
+          ? 12
+          : 13;
+    if (range.min < 0 || range.max > maximum || range.min > range.max) {
+      errors.push(
+        `${range.filter} must be between 0 and ${maximum}, with min no greater than max.`,
+      );
+    }
+  };
+  for (const combination of combinations) {
+    for (const filter of combination.filters) {
+      if (filter.type === "range") validateRange(filter);
+      else filter.filters.forEach(validateRange);
+    }
+  }
+  return errors;
+}
+
 export function buildRestrictions(
   formData: FormData,
 ): RelativeSeatRestrictions | undefined {
@@ -294,6 +426,7 @@ export function formDataToTaskConfigDto(
     readCalculationType(formData) ?? CalculationType.ONE_SIDED_BIDDING_LEVEL;
   const level = readContractLevel(formData) ?? 4;
   const strain = readContractStrain(formData) ?? "S";
+  const combinations = readCombinations(formData);
 
   return {
     meta: {
@@ -304,6 +437,7 @@ export function formDataToTaskConfigDto(
       fixedSeat: "N",
       fixedHand,
       restrictions: buildRestrictions(formData),
+      combinations: combinations.length > 0 ? combinations : undefined,
     },
     settings: {
       dealsK: boardsK,

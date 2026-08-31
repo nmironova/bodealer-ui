@@ -3,6 +3,13 @@
 import { useActionState, useCallback, useEffect, useState } from "react";
 import type { NewTaskState } from "@/app/lib/actions";
 import { createBodealerTask } from "@/app/lib/actions";
+import type {
+  AdvancedCombinationFilter,
+  AnyInListBelowFilter,
+  CombinationRangeFilter,
+  CombinationSeat,
+  WalrusRangeFilterName,
+} from "@/app/lib/dto/task-config";
 import {
   TASK_STATUS,
   type TaskStatus,
@@ -422,6 +429,504 @@ function RestrictionBlock({
   );
 }
 
+const COMBINATION_SEAT_OPTIONS: Array<{
+  value: CombinationSeat;
+  label: string;
+}> = [
+  { value: "partner", label: "Partner" },
+  { value: "lho", label: "LHO" },
+  { value: "rho", label: "RHO" },
+];
+const COMBINATION_FILTER_OPTIONS: Array<{
+  value: WalrusRangeFilterName;
+  label: string;
+}> = [
+  { value: "PointsRange", label: "HCP" },
+  { value: "ControlsRange", label: "Controls" },
+  { value: "SpadesLen", label: "Spades length" },
+  { value: "HeartsLen", label: "Hearts length" },
+  { value: "DiamondsLen", label: "Diamonds length" },
+  { value: "ClubsLen", label: "Clubs length" },
+];
+
+function newCombinationRange(): CombinationRangeFilter {
+  return {
+    type: "range",
+    seat: "partner",
+    filter: "PointsRange",
+    min: 0,
+    max: 37,
+  };
+}
+
+function parseCombinationValue(value?: string): AdvancedCombinationFilter[] {
+  if (!value) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? (parsed as AdvancedCombinationFilter[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function TopLevelAnyEditor({
+  value,
+  onChange,
+  onRemove,
+}: {
+  value: AnyInListBelowFilter;
+  onChange: (value: AnyInListBelowFilter) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-900">
+          Any in list below for
+          <select
+            value={value.seat}
+            onChange={(event) =>
+              onChange({
+                ...value,
+                seat: event.target.value as CombinationSeat,
+              })
+            }
+            className="h-8 rounded-md border border-gray-300 bg-white px-2 text-sm font-normal normal-case tracking-normal text-gray-900"
+          >
+            {COMBINATION_SEAT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="text-xs font-medium text-red-700 hover:underline"
+        >
+          Remove any group
+        </button>
+      </div>
+      <div className="mt-3 space-y-2">
+        {value.filters.map((filter, index) => (
+          <CombinationRangeRow
+            key={index}
+            value={filter}
+            onChange={(nextFilter) =>
+              onChange({
+                ...value,
+                filters: value.filters.map((item, itemIndex) =>
+                  itemIndex === index ? nextFilter : item,
+                ),
+              })
+            }
+            onRemove={() =>
+              onChange({
+                ...value,
+                filters: value.filters.filter(
+                  (_, itemIndex) => itemIndex !== index,
+                ),
+              })
+            }
+          />
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() =>
+          onChange({
+            ...value,
+            filters: [
+              ...value.filters,
+              { ...newCombinationRange(), seat: value.seat },
+            ],
+          })
+        }
+        className="mt-2 text-xs font-medium text-blue-800"
+      >
+        + Add alternative
+      </button>
+    </div>
+  );
+}
+
+function CombinationRangeRow({
+  value,
+  onChange,
+  onRemove,
+}: {
+  value: CombinationRangeFilter;
+  onChange: (value: CombinationRangeFilter) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="grid gap-2 rounded-md border border-gray-200 bg-white p-2 sm:grid-cols-[1fr_1.35fr_70px_70px_auto]">
+      <select
+        aria-label="Seat"
+        value={value.seat}
+        onChange={(event) =>
+          onChange({ ...value, seat: event.target.value as CombinationSeat })
+        }
+        className="h-9 rounded-md border border-gray-300 bg-white px-2 text-sm"
+      >
+        {COMBINATION_SEAT_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label="Filter"
+        value={value.filter}
+        onChange={(event) =>
+          onChange({
+            ...value,
+            filter: event.target.value as WalrusRangeFilterName,
+          })
+        }
+        className="h-9 rounded-md border border-gray-300 bg-white px-2 text-sm"
+      >
+        {COMBINATION_FILTER_OPTIONS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <input
+        aria-label="Minimum"
+        type="number"
+        min={0}
+        value={value.min}
+        onChange={(event) =>
+          onChange({ ...value, min: Number(event.target.value) })
+        }
+        className="h-9 rounded-md border border-gray-300 px-2 text-sm"
+      />
+      <input
+        aria-label="Maximum"
+        type="number"
+        min={0}
+        value={value.max}
+        onChange={(event) =>
+          onChange({ ...value, max: Number(event.target.value) })
+        }
+        className="h-9 rounded-md border border-gray-300 px-2 text-sm"
+      />
+      <button
+        type="button"
+        onClick={onRemove}
+        className="h-9 rounded-md px-2 text-sm text-red-700 hover:bg-red-50"
+        aria-label="Remove condition"
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
+function CombinationEditor({
+  combinations,
+  onChange,
+}: {
+  combinations: AdvancedCombinationFilter[];
+  onChange: (value: AdvancedCombinationFilter[]) => void;
+}) {
+  const update = (index: number, value: AdvancedCombinationFilter) =>
+    onChange(
+      combinations.map((item, itemIndex) =>
+        itemIndex === index ? value : item,
+      ),
+    );
+
+  return (
+    <div className="mt-4 border-t border-gray-200 pt-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-950">
+            Advanced combinations
+          </h3>
+          <p className="mt-1 text-xs text-gray-500">
+            Reject a deal when every condition matches. An “any” group matches
+            when one of its conditions does.
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              onChange([
+                ...combinations,
+                {
+                  type: "anyInListBelow",
+                  seat: "partner",
+                  filters: [newCombinationRange()],
+                },
+              ])
+            }
+            className="rounded-md border border-blue-300 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-800 hover:bg-blue-100"
+          >
+            Add any group
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onChange([
+                ...combinations,
+                {
+                  type: "excludeCombination",
+                  seat: "partner",
+                  filters: [newCombinationRange()],
+                },
+              ])
+            }
+            className="rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100"
+          >
+            Add exclusion
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-3 space-y-3">
+        {combinations.map((combination, combinationIndex) =>
+          combination.type === "anyInListBelow" ? (
+            <TopLevelAnyEditor
+              key={combinationIndex}
+              value={combination}
+              onChange={(value) => update(combinationIndex, value)}
+              onRemove={() =>
+                onChange(
+                  combinations.filter((_, index) => index !== combinationIndex),
+                )
+              }
+            />
+          ) : (
+            <div
+              key={combinationIndex}
+              className="rounded-lg border border-amber-200 bg-amber-50/60 p-3"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                  Exclude owner
+                  <select
+                    value={combination.seat}
+                    onChange={(event) =>
+                      update(combinationIndex, {
+                        ...combination,
+                        seat: event.target.value as CombinationSeat,
+                      })
+                    }
+                    className="h-8 rounded-md border border-gray-300 bg-white px-2 text-sm font-normal normal-case tracking-normal text-gray-900"
+                  >
+                    {COMBINATION_SEAT_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onChange(
+                      combinations.filter(
+                        (_, index) => index !== combinationIndex,
+                      ),
+                    )
+                  }
+                  className="text-xs font-medium text-red-700 hover:underline"
+                >
+                  Remove exclusion
+                </button>
+              </div>
+
+              <div className="mt-3 space-y-2">
+                {combination.filters.map((filter, filterIndex) =>
+                  filter.type === "range" ? (
+                    <CombinationRangeRow
+                      key={filterIndex}
+                      value={filter}
+                      onChange={(value) =>
+                        update(combinationIndex, {
+                          ...combination,
+                          filters: combination.filters.map((item, index) =>
+                            index === filterIndex ? value : item,
+                          ),
+                        })
+                      }
+                      onRemove={() =>
+                        update(combinationIndex, {
+                          ...combination,
+                          filters: combination.filters.filter(
+                            (_, index) => index !== filterIndex,
+                          ),
+                        })
+                      }
+                    />
+                  ) : (
+                    <div
+                      key={filterIndex}
+                      className="rounded-md border border-blue-200 bg-blue-50 p-2"
+                    >
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <label className="flex items-center gap-2 text-xs font-semibold text-blue-900">
+                          Any in list below
+                          <select
+                            value={filter.seat}
+                            onChange={(event) =>
+                              update(combinationIndex, {
+                                ...combination,
+                                filters: combination.filters.map(
+                                  (item, index) =>
+                                    index === filterIndex &&
+                                    item.type === "anyInListBelow"
+                                      ? {
+                                          ...item,
+                                          seat: event.target
+                                            .value as CombinationSeat,
+                                        }
+                                      : item,
+                                ),
+                              })
+                            }
+                            className="h-8 rounded-md border border-gray-300 bg-white px-2 text-sm font-normal text-gray-900"
+                          >
+                            {COMBINATION_SEAT_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            update(combinationIndex, {
+                              ...combination,
+                              filters: combination.filters.filter(
+                                (_, index) => index !== filterIndex,
+                              ),
+                            })
+                          }
+                          className="text-xs text-red-700"
+                        >
+                          Remove group
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {filter.filters.map((child, childIndex) => (
+                          <CombinationRangeRow
+                            key={childIndex}
+                            value={child}
+                            onChange={(value) =>
+                              update(combinationIndex, {
+                                ...combination,
+                                filters: combination.filters.map(
+                                  (item, index) =>
+                                    index === filterIndex &&
+                                    item.type === "anyInListBelow"
+                                      ? {
+                                          ...item,
+                                          filters: item.filters.map(
+                                            (entry, entryIndex) =>
+                                              entryIndex === childIndex
+                                                ? value
+                                                : entry,
+                                          ),
+                                        }
+                                      : item,
+                                ),
+                              })
+                            }
+                            onRemove={() =>
+                              update(combinationIndex, {
+                                ...combination,
+                                filters: combination.filters.map(
+                                  (item, index) =>
+                                    index === filterIndex &&
+                                    item.type === "anyInListBelow"
+                                      ? {
+                                          ...item,
+                                          filters: item.filters.filter(
+                                            (_, entryIndex) =>
+                                              entryIndex !== childIndex,
+                                          ),
+                                        }
+                                      : item,
+                                ),
+                              })
+                            }
+                          />
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          update(combinationIndex, {
+                            ...combination,
+                            filters: combination.filters.map((item, index) =>
+                              index === filterIndex &&
+                              item.type === "anyInListBelow"
+                                ? {
+                                    ...item,
+                                    filters: [
+                                      ...item.filters,
+                                      newCombinationRange(),
+                                    ],
+                                  }
+                                : item,
+                            ),
+                          })
+                        }
+                        className="mt-2 text-xs font-medium text-blue-800"
+                      >
+                        + Add alternative
+                      </button>
+                    </div>
+                  ),
+                )}
+              </div>
+              <div className="mt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    update(combinationIndex, {
+                      ...combination,
+                      filters: [...combination.filters, newCombinationRange()],
+                    })
+                  }
+                  className="text-xs font-medium text-gray-700"
+                >
+                  + Add condition
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    update(combinationIndex, {
+                      ...combination,
+                      filters: [
+                        ...combination.filters,
+                        {
+                          type: "anyInListBelow",
+                          seat: combination.seat,
+                          filters: [newCombinationRange()],
+                        },
+                      ],
+                    })
+                  }
+                  className="text-xs font-medium text-blue-800"
+                >
+                  + Add any group
+                </button>
+              </div>
+            </div>
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
+
 function LogsPanel({
   taskId,
   onStatusChange,
@@ -688,6 +1193,7 @@ export default function NewBoardForm() {
 
   const contractLevel = values.contractLevel ?? "4";
   const contractStrain = values.contractStrain ?? "S";
+  const combinations = parseCombinationValue(values.combinations);
   const submittedBoardName = state?.values.name?.trim();
   const currentBoardName = values.name?.trim();
   const pageTitle =
@@ -928,6 +1434,11 @@ export default function NewBoardForm() {
               defaultOpen={Boolean(state?.errors?.general)}
             >
               <div className="space-y-3">
+                <input
+                  type="hidden"
+                  name="combinations"
+                  value={values.combinations ?? ""}
+                />
                 <div className="flex justify-end">
                   <button
                     type="button"
@@ -976,6 +1487,17 @@ export default function NewBoardForm() {
                       error.startsWith("RHO:"),
                     ),
                   )}
+                />
+                <CombinationEditor
+                  combinations={combinations}
+                  onChange={(nextCombinations) =>
+                    handleValueChange(
+                      "combinations",
+                      nextCombinations.length > 0
+                        ? JSON.stringify(nextCombinations)
+                        : "",
+                    )
+                  }
                 />
               </div>
             </CollapsibleSection>

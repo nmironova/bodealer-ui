@@ -7,12 +7,14 @@ import {
   formDataToTaskConfigDto,
   isEnabledCalculationType,
   readCalculationType,
+  readCombinations,
   readContractLevel,
   readContractStrain,
   readPostmortemMode,
   sanitizeFileName,
   toInt,
   validatePlayerRestrictions,
+  validateCombinations,
 } from "./bodealer-form";
 
 export type NewTaskState = {
@@ -93,6 +95,7 @@ export async function createBodealerTask(
   }
 
   const restrictions = buildRestrictions(formData);
+  const combinations = readCombinations(formData);
   const restrictionErrors = [
     ...validatePlayerRestrictions(restrictions?.partner, "Partner"),
     ...validatePlayerRestrictions(restrictions?.lho, "LHO"),
@@ -102,6 +105,10 @@ export async function createBodealerTask(
   if (restrictionErrors.length > 0) {
     errors.general = [...(errors.general ?? []), ...restrictionErrors];
   }
+  const combinationErrors = validateCombinations(combinations);
+  if (combinationErrors.length > 0) {
+    errors.general = [...(errors.general ?? []), ...combinationErrors];
+  }
 
   if (Object.keys(errors).length > 0) {
     return { message: "Please fix the errors.", errors, values };
@@ -109,6 +116,10 @@ export async function createBodealerTask(
 
   const task = formDataToTaskConfigDto(formData, hand);
   const configText = buildWalrusConfig(task);
+
+  console.info(
+    `[Bodealer config: ${task.meta.name}]\n${configText}\n[/Bodealer config]`,
+  );
 
   let r: Response;
   try {
