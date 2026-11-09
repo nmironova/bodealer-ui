@@ -15,5 +15,5 @@ type TaskOutput = {
 export type TaskStatusResponse =
   | ({ status: typeof TASK_STATUS.RUNNING } & TaskOutput)
   | ({ status: typeof TASK_STATUS.COMPLETED } & TaskOutput)
-  | { status: typeof TASK_STATUS.FAILED; error: string }
-  | { status: typeof TASK_STATUS.CANCELLED };
+  | ({ status: typeof TASK_STATUS.FAILED; error: string } & TaskOutput)
+  | ({ status: typeof TASK_STATUS.CANCELLED } & TaskOutput);

@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useActionState,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useActionState, useCallback, useRef, useState } from "react";
 import type { NewTaskState } from "@/app/lib/actions";
 import { createBodealerTask } from "@/app/lib/actions";
 import {
@@ -28,6 +22,7 @@ import {
 } from "@/app/lib/task-status";
 import { Button, ButtonVariant } from "@/app/ui/button";
 import HandPicker from "@/app/ui/hand-picker";
+import ResultsPanel from "./results-panel";
 
 function FieldError({ errors }: { errors?: string[] }) {
   if (!errors?.length) return null;
@@ -42,36 +37,6 @@ function hasSubmittedValues(values: Record<string, string>, prefix: string) {
 
 function toDigitsOnly(value: string) {
   return value.replaceAll(/\D/g, "");
-}
-
-function CollapsibleSection({
-  title,
-  children,
-  defaultOpen = false,
-}: {
-  title: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}) {
-  return (
-    <details
-      open={defaultOpen}
-      className="group rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
-    >
-      <summary className="cursor-pointer list-none">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-            {title}
-          </h2>
-          <span className="text-sm text-gray-400 transition-transform group-open:rotate-180">
-            ⌄
-          </span>
-        </div>
-      </summary>
-
-      <div className="mt-4">{children}</div>
-    </details>
-  );
 }
 
 function CollapsiblePanel({
@@ -91,15 +56,13 @@ function CollapsiblePanel({
     <details
       open={defaultOpen}
       className={[
-        "group rounded-lg border border-gray-200 bg-white p-5 shadow-sm",
+        "setup-section group rounded-lg border border-slate-200 bg-white/60 p-4",
         className,
       ].join(" ")}
     >
       <summary className="cursor-pointer list-none">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-            {title}
-          </h2>
+          <h2 className="text-base font-semibold text-slate-950">{title}</h2>
           <span className="text-sm text-gray-400 transition-transform group-open:rotate-180">
             ⌄
           </span>
@@ -337,19 +300,19 @@ function RestrictionBlock({
   onClear: (prefix: string) => void;
   defaultOpen?: boolean;
 }) {
-  const shouldOpen = defaultOpen || hasSubmittedValues(values, prefix);
+  const shouldOpen = defaultOpen;
   const summary = restrictionSummary(values, prefix);
 
   return (
     <details
       open={shouldOpen}
-      className="group rounded-lg border border-gray-200 bg-gray-50/80"
+      className="restriction-row group rounded-lg border border-gray-200 bg-gray-50/80"
     >
-      <summary className="cursor-pointer list-none p-4">
+      <summary className="cursor-pointer list-none p-2.5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-sm font-semibold text-gray-950">{title}</h3>
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <div className="mt-1 flex flex-wrap gap-1.5">
               {summary.length > 0 ? (
                 summary.map((item) => (
                   <span
@@ -938,165 +901,20 @@ function CombinationEditor({
   );
 }
 
-function LogsPanel({
-  taskId,
-  onStatusChange,
-}: {
-  taskId: string;
-  onStatusChange: (taskId: string, status: TaskStatus) => void;
-}) {
-  const [taskStatus, setTaskStatus] = useState<TaskStatusResponse>({
-    status: TASK_STATUS.RUNNING,
-  });
-  const [requestError, setRequestError] = useState<string>();
-  const [pollAttempt, setPollAttempt] = useState(0);
-
-  useEffect(() => {
-    if (!taskId) return;
-
-    setTaskStatus({ status: TASK_STATUS.RUNNING });
-    setRequestError(undefined);
-    onStatusChange(taskId, TASK_STATUS.RUNNING);
-
-    let intervalId: NodeJS.Timeout | null = null;
-    let failedAttempts = 0;
-    const MAX_FAILED_ATTEMPTS = 5;
-
-    // Immediately check status on mount, then poll every 2 seconds
-    const checkTaskStatus = async () => {
-      setPollAttempt((currentAttempt) => currentAttempt + 1);
-      try {
-        const res = await fetch(`/api/tasks/${taskId}`);
-        const data = (await res.json()) as
-          | TaskStatusResponse
-          | { error?: string };
-
-        if (res.ok) {
-          const status = data as TaskStatusResponse;
-          failedAttempts = 0;
-          setRequestError(undefined);
-          setTaskStatus(status);
-          onStatusChange(taskId, status.status);
-
-          // Stop polling when the task reaches a terminal state
-          if (status.status !== TASK_STATUS.RUNNING && intervalId) {
-            console.log(`Task ${status.status}, stopping polling`);
-            clearInterval(intervalId);
-            intervalId = null;
-          }
-        } else {
-          throw new Error(
-            "error" in data && data.error
-              ? data.error
-              : "Failed to fetch task status",
-          );
-        }
-      } catch (e) {
-        failedAttempts++;
-        const errorMsg =
-          e instanceof Error ? e.message : "Error fetching task status";
-
-        setRequestError(errorMsg);
-
-        // Stop polling after 5 failed attempts
-        if (failedAttempts >= MAX_FAILED_ATTEMPTS && intervalId) {
-          console.log(
-            `Failed to connect ${MAX_FAILED_ATTEMPTS} times, stopping polling`,
-          );
-          clearInterval(intervalId);
-          intervalId = null;
-          setRequestError(
-            `Connection lost after ${MAX_FAILED_ATTEMPTS} attempts`,
-          );
-        }
-      }
-    };
-
-    checkTaskStatus();
-
-    // Set up polling interval (2 seconds)
-    intervalId = setInterval(checkTaskStatus, 2000);
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [onStatusChange, taskId]);
-
-  return (
-    <CollapsiblePanel
-      title="Logs"
-      defaultOpen={true}
-      className="h-auto min-h-20 min-w-80 max-w-[calc(100vw-2rem)] resize overflow-hidden border-blue-200 bg-blue-50/50 open:h-96 open:min-h-64"
-      contentClassName="h-[calc(100%-2rem)]"
-    >
-      <div className="flex h-full flex-col gap-4">
-        <div className="rounded-md border border-blue-200 bg-white p-3">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-semibold text-gray-950">
-              Board started
-            </span>
-            <span
-              className={[
-                "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold",
-                taskStatus.status === TASK_STATUS.COMPLETED
-                  ? "border-green-200 bg-green-50 text-green-700"
-                  : taskStatus.status === TASK_STATUS.FAILED
-                    ? "border-red-200 bg-red-50 text-red-700"
-                    : taskStatus.status === TASK_STATUS.CANCELLED
-                      ? "border-gray-300 bg-gray-100 text-gray-700"
-                      : "border-blue-200 bg-blue-50 text-blue-700",
-              ].join(" ")}
-            >
-              {taskStatus.status === TASK_STATUS.RUNNING ? (
-                <span
-                  aria-hidden="true"
-                  className="size-3 animate-spin rounded-full border-2 border-blue-200 border-t-blue-700"
-                />
-              ) : null}
-              {taskStatus.status === TASK_STATUS.COMPLETED
-                ? "Completed"
-                : taskStatus.status === TASK_STATUS.FAILED
-                  ? "Failed"
-                  : taskStatus.status === TASK_STATUS.CANCELLED
-                    ? "Cancelled"
-                    : "Running"}
-            </span>
-          </div>
-
-          <div className="mt-3 grid gap-1 text-xs text-gray-600">
-            <div className="flex items-center justify-between gap-3">
-              <span>Task id</span>
-              <span className="truncate font-mono text-gray-900">{taskId}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="min-h-24 flex-1 overflow-auto rounded-md border border-gray-200 bg-gray-950 p-3 font-mono text-xs text-gray-200">
-          {requestError ? (
-            <div className="text-red-400">Error: {requestError}</div>
-          ) : taskStatus.status === TASK_STATUS.FAILED ? (
-            <div className="text-red-400">Error: {taskStatus.error}</div>
-          ) : taskStatus.status === TASK_STATUS.CANCELLED ? (
-            <div className="text-gray-300">task cancelled</div>
-          ) : taskStatus.status === TASK_STATUS.COMPLETED &&
-            taskStatus.resultText ? (
-            <pre className="whitespace-pre-wrap break-words text-green-300">
-              {taskStatus.resultText}
-            </pre>
-          ) : (
-            <>
-              <div className="text-green-300">task accepted</div>
-              <div className="mt-1 text-gray-400">
-                checking task status
-                {".".repeat(Math.max(1, pollAttempt))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </CollapsiblePanel>
+function configurationSnapshot(values: Record<string, string>) {
+  const normalized = {
+    taskType: "ONE_SIDED_BIDDING_LEVEL",
+    contractLevel: "4",
+    contractStrain: "S",
+    boardsK: "10",
+    postmortem: "AUTO",
+    hand: "- - - -",
+    ...values,
+  };
+  return JSON.stringify(
+    Object.entries(normalized)
+      .filter(([, value]) => value !== "")
+      .sort(([a], [b]) => a.localeCompare(b)),
   );
 }
 
@@ -1117,6 +935,16 @@ export default function NewBoardForm() {
     kind: "success" | "error";
     text: string;
   }>();
+  const [submittedConfiguration, setSubmittedConfiguration] =
+    useState<string>();
+  const [lastRun, setLastRun] = useState<{
+    taskId: string;
+    configuration?: string;
+  }>();
+  if (state?.taskId && state.taskId !== lastRun?.taskId) {
+    setLastRun({ taskId: state.taskId, configuration: submittedConfiguration });
+  }
+  const [handRevision, setHandRevision] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1233,6 +1061,7 @@ export default function NewBoardForm() {
     try {
       const loadedValues = parseBoardFile(await file.text());
       setValues(loadedValues);
+      setHandRevision((revision) => revision + 1);
       setFileMessage({
         kind: "success",
         text: `Loaded settings from ${file.name}.`,
@@ -1251,68 +1080,86 @@ export default function NewBoardForm() {
   const contractLevel = values.contractLevel ?? "4";
   const contractStrain = values.contractStrain ?? "S";
   const combinations = parseCombinationValue(values.combinations);
-  const submittedBoardName = state?.values.name?.trim();
-  const currentBoardName = values.name?.trim();
-  const pageTitle =
-    state?.taskId && submittedBoardName
-      ? submittedBoardName
-      : pending && currentBoardName
-        ? currentBoardName
-        : "New Board";
-
   return (
     <>
-      <div className="flex flex-col gap-3 border-b border-gray-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-950">{pageTitle}</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Build the hand, choose the calculation, and tune the deal filters.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json,.bodealer.json,application/json"
-            className="sr-only"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) void loadBoardFile(file);
-            }}
-          />
-          <Button
-            type="button"
-            variant={ButtonVariant.SECONDARY}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            Load file
-          </Button>
-          <Button
-            type="button"
-            variant={ButtonVariant.GHOST}
-            onClick={saveBoardFile}
-          >
-            Save as file
-          </Button>
-        </div>
-      </div>
+      <form
+        ref={formRef}
+        action={formAction}
+        className="analysis-grid"
+        onSubmit={() => {
+          setSubmittedConfiguration(configurationSnapshot(values));
+        }}
+      >
+        <div className="analysis-setup">
+          <div className="setup-header mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-950">
+                Analysis setup
+              </h1>
+              <p className="mt-1 text-sm text-gray-600">
+                Configure your hand and explore the possibilities.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json,.bodealer.json,application/json"
+                className="sr-only"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void loadBoardFile(file);
+                }}
+              />
+              <Button
+                type="button"
+                variant={ButtonVariant.SECONDARY}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Load
+              </Button>
+              <Button
+                type="button"
+                variant={ButtonVariant.GHOST}
+                onClick={saveBoardFile}
+              >
+                Save
+              </Button>
+              <Button
+                type="button"
+                variant={ButtonVariant.GHOST}
+                onClick={() => {
+                  setValues({});
+                  setHandRevision((revision) => revision + 1);
+                  setFileMessage(undefined);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                }}
+              >
+                Clear
+              </Button>
+            </div>
+          </div>
 
-      {fileMessage ? (
-        <p
-          role={fileMessage.kind === "error" ? "alert" : "status"}
-          className={[
-            "mt-3 text-sm",
-            fileMessage.kind === "error" ? "text-red-700" : "text-green-700",
-          ].join(" ")}
-        >
-          {fileMessage.text}
-        </p>
-      ) : null}
+          {fileMessage ? (
+            <p
+              role={fileMessage.kind === "error" ? "alert" : "status"}
+              className={[
+                "mt-3 text-sm",
+                fileMessage.kind === "error"
+                  ? "text-red-700"
+                  : "text-green-700",
+              ].join(" ")}
+            >
+              {fileMessage.text}
+            </p>
+          ) : null}
 
-      <form ref={formRef} action={formAction} className="mt-6">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-start">
-          <div className="space-y-5">
-            <CollapsiblePanel title="Board setup" defaultOpen={true}>
+          <div className="setup-controls flex flex-col gap-3">
+            <CollapsiblePanel
+              title="Board information"
+              className="board-information order-1"
+              defaultOpen={true}
+            >
               <div className="space-y-4">
                 <TextField
                   id="name"
@@ -1334,21 +1181,118 @@ export default function NewBoardForm() {
                   <textarea
                     id="description"
                     name="description"
-                    rows={4}
+                    rows={1}
                     value={values.description ?? ""}
                     onChange={(e) =>
                       handleValueChange("description", e.target.value)
                     }
-                    placeholder="Optional notes about bidding, lead problem, assumptions, etc."
+                    placeholder="Optional notes…"
                     className="mt-2 w-full resize-y rounded-md border border-gray-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                   <FieldError errors={state?.errors?.description} />
                 </div>
               </div>
             </CollapsiblePanel>
-
-            <CollapsiblePanel title="Calculation" defaultOpen={true}>
-              <div className="space-y-5">
+            <CollapsiblePanel
+              title="Your hand (North)"
+              defaultOpen={true}
+              className="hand-section order-2"
+            >
+              <HandPicker
+                key={handRevision}
+                defaultHandText={values.hand}
+                onHandChange={(hand) => handleValueChange("hand", hand)}
+              />
+              <FieldError errors={state?.errors?.hand} />
+            </CollapsiblePanel>
+            <CollapsiblePanel
+              title="Restrictions"
+              className="restrictions-section order-3"
+              defaultOpen={true}
+            >
+              <div className="space-y-3">
+                <input
+                  type="hidden"
+                  name="combinations"
+                  value={values.combinations ?? ""}
+                />
+                <div className="restriction-tools flex justify-end">
+                  <button
+                    type="button"
+                    onClick={swapOpponentRestrictions}
+                    disabled={
+                      !hasSubmittedValues(values, "lho") &&
+                      !hasSubmittedValues(values, "rho")
+                    }
+                    className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Swap LHO ↔ RHO
+                  </button>
+                </div>
+                <RestrictionBlock
+                  title="Partner (South)"
+                  prefix="partner"
+                  values={values}
+                  onValueChange={handleValueChange}
+                  onClear={clearRestrictions}
+                  defaultOpen={Boolean(
+                    state?.errors?.general?.some((error) =>
+                      error.startsWith("Partner:"),
+                    ),
+                  )}
+                />
+                <RestrictionBlock
+                  title="East (LHO)"
+                  prefix="lho"
+                  values={values}
+                  onValueChange={handleValueChange}
+                  onClear={clearRestrictions}
+                  defaultOpen={Boolean(
+                    state?.errors?.general?.some((error) =>
+                      error.startsWith("LHO:"),
+                    ),
+                  )}
+                />
+                <RestrictionBlock
+                  title="West (RHO)"
+                  prefix="rho"
+                  values={values}
+                  onValueChange={handleValueChange}
+                  onClear={clearRestrictions}
+                  defaultOpen={Boolean(
+                    state?.errors?.general?.some((error) =>
+                      error.startsWith("RHO:"),
+                    ),
+                  )}
+                />
+                <details
+                  open={combinations.length > 0}
+                  className="advanced-editor text-sm"
+                >
+                  <summary className="cursor-pointer text-slate-600">
+                    Advanced combinations
+                    {combinations.length > 0 ? ` (${combinations.length})` : ""}
+                  </summary>
+                  <CombinationEditor
+                    combinations={combinations}
+                    onChange={(nextCombinations) =>
+                      handleValueChange(
+                        "combinations",
+                        nextCombinations.length > 0
+                          ? JSON.stringify(nextCombinations)
+                          : "",
+                      )
+                    }
+                  />{" "}
+                </details>
+              </div>
+            </CollapsiblePanel>
+            <CollapsiblePanel
+              title="Calculation"
+              defaultOpen={true}
+              className="calculation-section order-4"
+            >
+              <div className="contents">
                 <div>
                   <label
                     htmlFor="taskType"
@@ -1393,7 +1337,7 @@ export default function NewBoardForm() {
                     value={contractStrain}
                   />
 
-                  <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  <div className="contract-options mt-2">
                     <div className="grid grid-cols-7 gap-1">
                       {CONTRACT_LEVELS.map((level) => {
                         const active = contractLevel === level;
@@ -1402,6 +1346,7 @@ export default function NewBoardForm() {
                           <button
                             key={level}
                             type="button"
+                            aria-pressed={active}
                             onClick={() =>
                               handleValueChange("contractLevel", level)
                             }
@@ -1418,7 +1363,7 @@ export default function NewBoardForm() {
                       })}
                     </div>
 
-                    <div className="mt-2 grid grid-cols-5 gap-1">
+                    <div className="contract-strains grid grid-cols-5 gap-1">
                       {CONTRACT_STRAINS.map((strain) => {
                         const active = contractStrain === strain;
 
@@ -1426,6 +1371,7 @@ export default function NewBoardForm() {
                           <button
                             key={strain}
                             type="button"
+                            aria-pressed={active}
                             onClick={() =>
                               handleValueChange("contractStrain", strain)
                             }
@@ -1446,11 +1392,7 @@ export default function NewBoardForm() {
                 </div>
               </div>
 
-              <FieldError errors={state?.errors?.calculation} />
-            </CollapsiblePanel>
-
-            <CollapsiblePanel title="Run" defaultOpen={true}>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="run-settings space-y-3">
                 <div>
                   <label
                     htmlFor="boardsK"
@@ -1502,134 +1444,57 @@ export default function NewBoardForm() {
               </div>
 
               <FieldError errors={state?.errors?.boardsK} />
+              <FieldError errors={state?.errors?.calculation} />
             </CollapsiblePanel>
           </div>
 
-          <div className="space-y-5">
-            {state?.taskId ? (
-              <LogsPanel
-                taskId={state.taskId}
-                onStatusChange={handleTaskStatusChange}
-              />
-            ) : null}
-            <CollapsiblePanel
-              title="Our hand"
-              defaultOpen={true}
-              className="border-gray-300 bg-gradient-to-b from-white to-gray-50"
-            >
-              <HandPicker
-                key={values.hand ?? ""}
-                defaultHandText={values.hand}
-              />
-              <FieldError errors={state?.errors?.hand} />
-            </CollapsiblePanel>
-
-            <CollapsibleSection
-              title="Restrictions"
-              defaultOpen={Boolean(state?.errors?.general)}
-            >
-              <div className="space-y-3">
-                <input
-                  type="hidden"
-                  name="combinations"
-                  value={values.combinations ?? ""}
-                />
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={swapOpponentRestrictions}
-                    disabled={
-                      !hasSubmittedValues(values, "lho") &&
-                      !hasSubmittedValues(values, "rho")
-                    }
-                    className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    Swap LHO ↔ RHO
-                  </button>
-                </div>
-                <RestrictionBlock
-                  title="Partner"
-                  prefix="partner"
-                  values={values}
-                  onValueChange={handleValueChange}
-                  onClear={clearRestrictions}
-                  defaultOpen={Boolean(
-                    state?.errors?.general?.some((error) =>
-                      error.startsWith("Partner:"),
-                    ),
-                  )}
-                />
-                <RestrictionBlock
-                  title="LHO"
-                  prefix="lho"
-                  values={values}
-                  onValueChange={handleValueChange}
-                  onClear={clearRestrictions}
-                  defaultOpen={Boolean(
-                    state?.errors?.general?.some((error) =>
-                      error.startsWith("LHO:"),
-                    ),
-                  )}
-                />
-                <RestrictionBlock
-                  title="RHO"
-                  prefix="rho"
-                  values={values}
-                  onValueChange={handleValueChange}
-                  onClear={clearRestrictions}
-                  defaultOpen={Boolean(
-                    state?.errors?.general?.some((error) =>
-                      error.startsWith("RHO:"),
-                    ),
-                  )}
-                />
-                <CombinationEditor
-                  combinations={combinations}
-                  onChange={(nextCombinations) =>
-                    handleValueChange(
-                      "combinations",
-                      nextCombinations.length > 0
-                        ? JSON.stringify(nextCombinations)
-                        : "",
-                    )
-                  }
-                />
-              </div>
-            </CollapsibleSection>
-          </div>
-        </div>
-
-        {state?.message && !state.taskId ? (
-          <div className="mt-5 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-800 shadow-sm">
-            {state?.message}
-            <FieldError errors={state?.errors?.general} />
-          </div>
-        ) : null}
-
-        {cancelError ? (
-          <p className="mt-3 text-sm text-red-700">{cancelError}</p>
-        ) : null}
-
-        <div className="sticky bottom-0 mt-5 flex items-center justify-end gap-3 border-t border-gray-200 bg-white/90 py-4 backdrop-blur">
-          {state?.taskId && isTaskRunning ? (
-            <Button
-              type="button"
-              variant={ButtonVariant.SECONDARY}
-              disabled={isCancelling}
-              onClick={handleCancelTask}
-              className="rounded-md px-5 py-2.5"
-            >
-              {isCancelling ? "Cancelling…" : "Cancel task"}
-            </Button>
+          {state?.message && !state.taskId ? (
+            <div className="mt-5 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-800 shadow-sm">
+              {state?.message}
+              <FieldError errors={state?.errors?.general} />
+            </div>
           ) : null}
-          <Button
-            type="submit"
-            disabled={pending || isTaskRunning || isCancelling}
-            className="rounded-md px-5 py-2.5 enabled:cursor-pointer"
-          >
-            {pending ? "Starting…" : state?.taskId ? "Run again" : "Start"}
-          </Button>
+
+          {cancelError ? (
+            <p className="mt-3 text-sm text-red-700">{cancelError}</p>
+          ) : null}
+
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-slate-200 pt-4">
+            {state?.taskId && isTaskRunning ? (
+              <Button
+                type="button"
+                variant={ButtonVariant.SECONDARY}
+                disabled={isCancelling}
+                onClick={handleCancelTask}
+                className="rounded-md px-5 py-2.5"
+              >
+                {isCancelling ? "Cancelling…" : "Cancel task"}
+              </Button>
+            ) : null}
+            <Button
+              type="submit"
+              disabled={pending || isTaskRunning || isCancelling}
+              className="flex-1 rounded-lg bg-gradient-to-b from-blue-500 to-blue-600 px-5 py-3 enabled:cursor-pointer"
+            >
+              {pending
+                ? "Starting…"
+                : state?.taskId
+                  ? "Run again"
+                  : "▶ Run analysis"}
+            </Button>
+          </div>
         </div>
+        <aside className="results-column min-w-0" aria-label="Analysis results">
+          <ResultsPanel
+            taskId={lastRun?.taskId}
+            starting={pending}
+            onStatusChange={handleTaskStatusChange}
+            stale={Boolean(
+              lastRun &&
+              lastRun.configuration !== configurationSnapshot(values),
+            )}
+          />
+        </aside>
       </form>
     </>
   );

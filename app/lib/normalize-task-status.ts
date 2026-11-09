@@ -52,11 +52,17 @@ export function normalizeTaskStatus(data: unknown): TaskStatusResponse | null {
     return {
       status,
       error: readStringProperty(data, "error") ?? "Task failed",
+      ...(resultText !== undefined ? { resultText } : {}),
+      ...(logTail !== undefined ? { logTail } : {}),
     };
   }
 
   if (status === TASK_STATUS.CANCELLED || status === "canceled") {
-    return { status: TASK_STATUS.CANCELLED };
+    return {
+      status: TASK_STATUS.CANCELLED,
+      ...(resultText !== undefined ? { resultText } : {}),
+      ...(logTail !== undefined ? { logTail } : {}),
+    };
   }
 
   return {
