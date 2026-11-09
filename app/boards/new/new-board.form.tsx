@@ -1,8 +1,19 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useState } from "react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import type { NewTaskState } from "@/app/lib/actions";
 import { createBodealerTask } from "@/app/lib/actions";
+import {
+  boardFileName,
+  createBoardFile,
+  parseBoardFile,
+} from "@/app/lib/board-config-file";
 import type {
   AdvancedCombinationFilter,
   AnyInListBelowFilter,
@@ -1102,6 +1113,12 @@ export default function NewBoardForm() {
   }>();
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string>();
+  const [fileMessage, setFileMessage] = useState<{
+    kind: "success" | "error";
+    text: string;
+  }>();
+  const formRef = useRef<HTMLFormElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleTaskStatusChange = useCallback(
     (taskId: string, status: TaskStatus) => {
@@ -1191,6 +1208,46 @@ export default function NewBoardForm() {
     });
   }
 
+  function saveBoardFile() {
+    if (!formRef.current) return;
+
+    const formData = new FormData(formRef.current);
+    const formValues = Object.fromEntries(
+      [...formData.entries()].flatMap(([name, value]) =>
+        typeof value === "string" ? [[name, value]] : [],
+      ),
+    );
+    const contents = JSON.stringify(createBoardFile(formValues), null, 2);
+    const url = URL.createObjectURL(
+      new Blob([contents], { type: "application/json" }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = boardFileName(formValues.name);
+    link.click();
+    URL.revokeObjectURL(url);
+    setFileMessage({ kind: "success", text: "Board settings saved." });
+  }
+
+  async function loadBoardFile(file: File) {
+    try {
+      const loadedValues = parseBoardFile(await file.text());
+      setValues(loadedValues);
+      setFileMessage({
+        kind: "success",
+        text: `Loaded settings from ${file.name}.`,
+      });
+    } catch (error) {
+      setFileMessage({
+        kind: "error",
+        text:
+          error instanceof Error ? error.message : "Could not load the file.",
+      });
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   const contractLevel = values.contractLevel ?? "4";
   const contractStrain = values.contractStrain ?? "S";
   const combinations = parseCombinationValue(values.combinations);
@@ -1205,16 +1262,54 @@ export default function NewBoardForm() {
 
   return (
     <>
-      <div className="flex flex-col gap-2 border-b border-gray-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-gray-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-gray-950">{pageTitle}</h1>
           <p className="mt-1 text-sm text-gray-600">
             Build the hand, choose the calculation, and tune the deal filters.
           </p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,.bodealer.json,application/json"
+            className="sr-only"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) void loadBoardFile(file);
+            }}
+          />
+          <Button
+            type="button"
+            variant={ButtonVariant.SECONDARY}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Load file
+          </Button>
+          <Button
+            type="button"
+            variant={ButtonVariant.GHOST}
+            onClick={saveBoardFile}
+          >
+            Save as file
+          </Button>
+        </div>
       </div>
 
-      <form action={formAction} className="mt-6">
+      {fileMessage ? (
+        <p
+          role={fileMessage.kind === "error" ? "alert" : "status"}
+          className={[
+            "mt-3 text-sm",
+            fileMessage.kind === "error" ? "text-red-700" : "text-green-700",
+          ].join(" ")}
+        >
+          {fileMessage.text}
+        </p>
+      ) : null}
+
+      <form ref={formRef} action={formAction} className="mt-6">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-start">
           <div className="space-y-5">
             <CollapsiblePanel title="Board setup" defaultOpen={true}>
