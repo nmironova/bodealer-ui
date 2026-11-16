@@ -1,4 +1,6 @@
-export default function RunningBoardsPage() {
+import { requireSession } from "../../lib/auth/request";
+export default async function RunningBoardsPage() {
+  await requireSession();
   return (
     <main className="mx-auto max-w-3xl p-6">
       <h1 className="text-2xl font-semibold">Running Boards</h1>

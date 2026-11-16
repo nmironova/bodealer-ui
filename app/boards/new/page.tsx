@@ -1,7 +1,9 @@
+import { requireSession } from "../../lib/auth/request";
 import Link from "next/link";
 import NewBoardForm from "./new-board.form";
 
-export default function NewBoardPage() {
+export default async function NewBoardPage() {
+  await requireSession();
   return (
     <>
       <header className="analysis-nav">
@@ -29,6 +31,11 @@ export default function NewBoardPage() {
             Completed
           </Link>
         </nav>
+        <form action="/logout" method="post" className="ml-auto">
+          <button className="cursor-pointer rounded-lg px-3 py-2 hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+            Sign out
+          </button>
+        </form>
       </header>
       <main className="analysis-page mx-auto max-w-[1600px] p-4 sm:p-6">
         <NewBoardForm />

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { createBodealerTask } from "../../app/lib/actions";
+import { prepareTask } from "../../app/lib/prepare-task";
 import {
   createBoardFile,
   parseBoardFile,
@@ -31,31 +31,16 @@ function toFormData(values: Record<string, string>) {
 
 for (const taskType of ["ONE_SIDED_BIDDING_LEVEL", "SEEK_OPENING_LEAD"]) {
   for (const declarer of ["N", "S"]) {
-    test(`${taskType} sends ${declarer} as declarer in the uploaded server config`, async () => {
+    test(`${taskType} prepares ${declarer} as declarer in the server config`, async () => {
       const values = { ...boardValues(), taskType, contractDeclarer: declarer };
       const data = toFormData(values);
-      const originalFetch = globalThis.fetch;
-      let uploadedConfig: string | undefined;
-      let requestedMethod: string | undefined;
-      globalThis.fetch = async (_url, options) => {
-        requestedMethod = options?.method;
-        const configFile = (options?.body as FormData).get("configFile");
-        expect(configFile).toBeInstanceOf(Blob);
-        uploadedConfig = await (configFile as Blob).text();
-        return Response.json({ id: "test-task" });
-      };
-      try {
-        const result = await createBodealerTask(undefined, data);
-        expect(result.taskId).toBe("test-task");
-        expect(requestedMethod).toBe("POST");
-        expect(uploadedConfig).toContain(`PRIMARY SCORER: V3N BY ${declarer}`);
-        expect(uploadedConfig).toContain("HAND: N:K865.AKT83.Q74.K");
-        // Declarer choice must not rotate the fixed hand or restriction seats.
-        expect(uploadedConfig).toContain("SOUTH: PointsRange, 7, 8");
-        expect(uploadedConfig).toContain("EAST: SpadesLen, 0, 5");
-      } finally {
-        globalThis.fetch = originalFetch;
-      }
+      const prepared = prepareTask(data);
+      expect(prepared.errors).toEqual({});
+      const config = "configText" in prepared ? prepared.configText : undefined;
+      expect(config).toContain(`PRIMARY SCORER: V3N BY ${declarer}`);
+      expect(config).toContain("HAND: N:K865.AKT83.Q74.K");
+      expect(config).toContain("SOUTH: PointsRange, 7, 8");
+      expect(config).toContain("EAST: SpadesLen, 0, 5");
     });
   }
 }
@@ -80,26 +65,14 @@ test("board files preserve either declarer, and legacy files keep Partner as def
   expect(buildWalrusConfig(task)).toContain("PRIMARY SCORER: V3N BY S");
 });
 
-test("invalid declarer values are rejected before contacting the server", async () => {
-  const originalFetch = globalThis.fetch;
-  let requests = 0;
-  globalThis.fetch = async () => {
-    requests += 1;
-    throw new Error("Unexpected request");
-  };
-  try {
-    for (const declarer of ["E", "W", "", "invalid"]) {
-      const result = await createBodealerTask(
-        undefined,
-        toFormData({ ...boardValues(), contractDeclarer: declarer }),
-      );
-      expect(result.taskId).toBeUndefined();
-      expect(result.errors.calculation).toEqual([
-        "Declarer must be We (North) or Partner (South).",
-      ]);
-    }
-    expect(requests).toBe(0);
-  } finally {
-    globalThis.fetch = originalFetch;
+test("invalid declarer values are rejected before submission", () => {
+  for (const declarer of ["E", "W", "", "invalid"]) {
+    const result = prepareTask(
+      toFormData({ ...boardValues(), contractDeclarer: declarer }),
+    );
+    expect("configText" in result).toBe(false);
+    expect(result.errors.calculation).toEqual([
+      "Declarer must be We (North) or Partner (South).",
+    ]);
   }
 });

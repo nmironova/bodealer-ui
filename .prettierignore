@@ -3,3 +3,10 @@ node_modules
 dist
 build
 coverage
+
+.next-test
+test-results
+playwright-report
+
+# Generated reports
+artifacts

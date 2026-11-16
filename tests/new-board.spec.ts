@@ -1,7 +1,7 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/browser";
 import { createBoardFile } from "../app/lib/board-config-file";
 
-const pageUrl = "http://127.0.0.1:3000/boards/new";
+const pageUrl = "/boards/new";
 
 test("loads, edits, swaps and saves the existing board format", async ({
   page,

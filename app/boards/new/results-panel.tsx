@@ -43,6 +43,11 @@ export default function ResultsPanel({
     async function poll() {
       try {
         const response = await fetch(`/api/tasks/${taskId}`);
+        if (response.status === 401) {
+          if (active)
+            setError("Your session has expired. Sign in again to continue.");
+          return;
+        }
         const data = await response.json();
         if (!response.ok)
           throw new Error(data.error || "Could not fetch task status");
@@ -149,6 +154,9 @@ export default function ResultsPanel({
       {error && (
         <div role="alert" className="mb-3 text-sm text-red-700">
           {error}{" "}
+          <a href="/login" className="mr-2 underline">
+            Sign in
+          </a>
           <button
             type="button"
             onClick={() => setRetry((value) => value + 1)}

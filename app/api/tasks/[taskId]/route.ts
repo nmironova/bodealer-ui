@@ -1,94 +1,65 @@
 import { NextResponse } from "next/server";
+import { TASK_STATUS } from "../../../lib/task-status";
+import { normalizeTaskStatus } from "../../../lib/normalize-task-status";
+import { taskAccess } from "../../../lib/auth/task-access";
+import { backendFetch, responseJson } from "../../../lib/backend";
 
-import { TASK_STATUS } from "@/app/lib/task-status";
-import {
-  normalizeTaskStatus,
-  readStringProperty,
-} from "@/app/lib/normalize-task-status";
+type Context = { params: Promise<{ taskId: string }> };
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ taskId: string }> },
-) {
+export async function DELETE(request: Request, { params }: Context) {
+  const denied = await taskAccess(request);
+  if (denied) return denied;
   const { taskId } = await params;
-
-  if (!taskId) {
+  if (!taskId)
     return NextResponse.json({ error: "Task ID is required" }, { status: 400 });
-  }
-
   try {
-    const r = await fetch(`${process.env.BODEALER_URL}/tasks/${taskId}`, {
-      method: "DELETE",
-      headers: {
-        "X-API-Key": process.env.BODEALER_API_KEY ?? "",
-      },
-      cache: "no-store",
-    });
-
-    const data: unknown = r.status === 204 ? null : await r.json();
-
-    if (!r.ok) {
+    const response = await backendFetch(
+      `/tasks/${encodeURIComponent(taskId)}`,
+      { method: "DELETE" },
+    );
+    if (!response.ok)
       return NextResponse.json(
-        {
-          error: readStringProperty(data, "error") ?? "Failed to cancel task",
-        },
-        { status: r.status },
+        { error: "Failed to cancel task." },
+        { status: response.status },
       );
-    }
-
     return NextResponse.json({ status: TASK_STATUS.CANCELLED });
-  } catch (e) {
+  } catch {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Failed to cancel task" },
-      { status: 500 },
+      { error: "Unable to reach Bodealer service." },
+      { status: 502 },
     );
   }
 }
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ taskId: string }> },
-) {
+export async function GET(request: Request, { params }: Context) {
+  const denied = await taskAccess(request);
+  if (denied) return denied;
   const { taskId } = await params;
-
-  if (!taskId) {
+  if (!taskId)
     return NextResponse.json({ error: "Task ID is required" }, { status: 400 });
-  }
-
   try {
-    const r = await fetch(`${process.env.BODEALER_URL}/tasks/${taskId}`, {
-      method: "GET",
-      headers: {
-        "X-API-Key": process.env.BODEALER_API_KEY ?? "",
-      },
-      cache: "no-store",
-    });
-
-    const data: unknown = await r.json();
-
-    if (!r.ok) {
+    const response = await backendFetch(`/tasks/${encodeURIComponent(taskId)}`);
+    if (!response.ok)
       return NextResponse.json(
-        {
-          error:
-            readStringProperty(data, "error") ?? "Failed to fetch task status",
-        },
-        { status: r.status },
+        { error: "Failed to fetch task status." },
+        { status: response.status },
       );
-    }
-
-    const taskStatus = normalizeTaskStatus(data);
-    if (!taskStatus) {
+    const taskStatus = normalizeTaskStatus(await responseJson(response));
+    if (!taskStatus)
       return NextResponse.json(
         { error: "Invalid task status response" },
         { status: 502 },
       );
+    if (taskStatus.status === TASK_STATUS.FAILED) {
+      // Solver/service exceptions can include private infrastructure details.
+      taskStatus.error =
+        "Calculation failed. Review available output or contact the beta administrator.";
     }
-
     return NextResponse.json(taskStatus);
-  } catch (e) {
+  } catch {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Failed to fetch task status" },
-      { status: 500 },
+      { error: "Unable to reach Bodealer service." },
+      { status: 502 },
     );
   }
 }

@@ -1,4 +1,6 @@
-export default function CompletedBoardsPage() {
+import { requireSession } from "../../lib/auth/request";
+export default async function CompletedBoardsPage() {
+  await requireSession();
   return (
     <main className="mx-auto max-w-3xl p-6">
       <h1 className="text-2xl font-semibold">Completed Boards</h1>

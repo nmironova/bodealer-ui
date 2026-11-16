@@ -1,12 +1,20 @@
+import { requireSession } from "../lib/auth/request";
 import DashboardTile from "../ui/dashboard-tile";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  await requireSession();
   return (
     <main className="mx-auto max-w-3xl p-6">
       <h1 className="text-2xl font-semibold text-gray-900">Bodealer</h1>
       <p className="mt-2 text-sm text-gray-600">
         Create a board task, track progress, and review results.
       </p>
+
+      <form action="/logout" method="post" className="mt-4">
+        <button className="cursor-pointer text-sm text-blue-700 underline">
+          Sign out
+        </button>
+      </form>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <DashboardTile
