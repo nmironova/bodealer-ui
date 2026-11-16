@@ -29,6 +29,7 @@ openssl rand -hex 32
 Use one generated value for `SESSION_SECRET` and a different value for `BACKEND_API_TOKEN`. Do not paste private values into source code, screenshots, logs, or the test fixtures. Production initialization fails with a configuration error if required values are missing or invalid. Local development also requires explicit credentials; there is no authentication bypass.
 
 `BODEALER_URL` and `BODEALER_API_KEY` are retired. Migrate to the variables above; legacy headers are no longer sent.
+URL must contain https when set in Vercel environment variables
 
 ## Local development
 
