@@ -64,8 +64,9 @@ test("incorrect password gives feedback; correct password issues an HttpOnly ses
   await expect(page.locator("#login-error")).toContainText(
     "Incorrect password",
   );
+  await expect(page.getByLabel("Beta password")).toHaveValue("wrong password");
   await page.getByLabel("Beta password").fill(testEnvironment.BETA_PASSWORD);
-  await page.getByRole("button", { name: "Sign In", exact: true }).click();
+  await page.getByLabel("Beta password").press("Enter");
   await expect(page).toHaveURL(`${testBaseURL}/boards/new`);
   const session = (await context.cookies()).find(
     (cookie) => cookie.name === "bodealer_beta",

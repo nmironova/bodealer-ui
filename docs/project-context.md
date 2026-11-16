@@ -38,6 +38,10 @@ The app uses Next.js 16.1.1 App Router, React 19.2.3, TypeScript, Tailwind CSS 4
 | `tests/api/task-status.spec.ts`     | Status normalization and output preservation tests                                              |
 | `tests/new-board.spec.ts`           | File handling, hand editing, swapping, console interaction, and responsive layout tests         |
 
+## Login visual design
+
+The login uses a centered card with a 512px maximum width on a pale blue-gray background, Bodealer branding and Private beta badge, a decorative CSS fan of four suits, and the heading “Welcome to the table.” Styles are isolated in `app/login/login.module.css`; dashboard and analysis layouts are unaffected. The form has a show/hide toggle and retains its password locally after validation errors. Server-side authentication, rate limits, session/cookie settings, and environment configuration remain unchanged. There are no animations or external image/UI dependencies. Browser tests cover keyboard navigation, focus, Enter submission, password retention/visibility, mobile overflow, and a reduced-height viewport simulating keyboard constraints.
+
 ## Beta authentication
 
 The shared-password beta is implemented without accounts, a database, or OAuth. See [README](../README.md) for required environment variables, deployment, rotation, and security limitations.
