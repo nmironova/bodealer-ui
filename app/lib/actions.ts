@@ -8,6 +8,7 @@ import {
   isEnabledCalculationType,
   readCalculationType,
   readCombinations,
+  readContractDeclarer,
   readContractLevel,
   readContractStrain,
   readPostmortemMode,
@@ -53,6 +54,7 @@ export async function createBodealerTask(
   const calculationType = readCalculationType(formData);
   const contractLevel = readContractLevel(formData);
   const contractStrain = readContractStrain(formData);
+  const contractDeclarer = readContractDeclarer(formData);
   const postmortem = readPostmortemMode(formData);
 
   const errors: NewTaskState["errors"] = {};
@@ -85,6 +87,8 @@ export async function createBodealerTask(
     errors.calculation = ["This task type is not available yet."];
   } else if (!contractLevel || !contractStrain) {
     errors.calculation = ["Contract level and strain are required."];
+  } else if (!contractDeclarer) {
+    errors.calculation = ["Declarer must be We (North) or Partner (South)."];
   }
 
   if (!postmortem) {

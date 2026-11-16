@@ -906,6 +906,7 @@ function configurationSnapshot(values: Record<string, string>) {
     taskType: "ONE_SIDED_BIDDING_LEVEL",
     contractLevel: "4",
     contractStrain: "S",
+    contractDeclarer: "S",
     boardsK: "10",
     postmortem: "AUTO",
     hand: "- - - -",
@@ -1393,6 +1394,26 @@ export default function NewBoardForm() {
               </div>
 
               <div className="run-settings space-y-3">
+                <div>
+                  <label
+                    htmlFor="contractDeclarer"
+                    className="block text-sm font-medium text-gray-900"
+                  >
+                    Declarer
+                  </label>
+                  <select
+                    id="contractDeclarer"
+                    name="contractDeclarer"
+                    value={values.contractDeclarer ?? "S"}
+                    onChange={(event) =>
+                      handleValueChange("contractDeclarer", event.target.value)
+                    }
+                    className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="N">We (North)</option>
+                    <option value="S">Partner (South)</option>
+                  </select>
+                </div>
                 <div>
                   <label
                     htmlFor="boardsK"

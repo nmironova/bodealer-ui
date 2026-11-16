@@ -113,6 +113,7 @@ export type TaskConfigDto = {
     targetContract?: {
       level: 1 | 2 | 3 | 4 | 5 | 6 | 7;
       strain: Strain;
+      declarer?: Seat; // Defaults to the fixed hand's partner for legacy configs.
     };
   };
 };

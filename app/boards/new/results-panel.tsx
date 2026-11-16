@@ -101,9 +101,6 @@ export default function ResultsPanel({
     <section className="results-panel">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
-          <span aria-hidden="true" className="mr-3 text-slate-500">
-            ▥
-          </span>
           Results
         </h2>
         <span

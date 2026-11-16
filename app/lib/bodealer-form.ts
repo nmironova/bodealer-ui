@@ -88,6 +88,12 @@ export function readPostmortemMode(formData: FormData): PostmortemMode | null {
   return null;
 }
 
+export function readContractDeclarer(formData: FormData): "N" | "S" | null {
+  // Older boards omit this setting and have always been played by South.
+  const raw = formData.get("contractDeclarer") ?? "S";
+  return raw === "N" || raw === "S" ? raw : null;
+}
+
 export function countCardsFromHandText(hand: string): number {
   const suits = hand.trim().split(/\s+/);
   if (suits.length !== 4) return 0;
@@ -426,6 +432,7 @@ export function formDataToTaskConfigDto(
     readCalculationType(formData) ?? CalculationType.ONE_SIDED_BIDDING_LEVEL;
   const level = readContractLevel(formData) ?? 4;
   const strain = readContractStrain(formData) ?? "S";
+  const declarer = readContractDeclarer(formData) ?? "S";
   const combinations = readCombinations(formData);
 
   return {
@@ -448,6 +455,7 @@ export function formDataToTaskConfigDto(
       targetContract: {
         level,
         strain,
+        declarer,
       },
     },
   };

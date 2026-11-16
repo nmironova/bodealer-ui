@@ -58,7 +58,8 @@ function buildPrimaryScorer(task: TaskConfigDto): string {
     throw new Error("targetContract is required");
   }
 
-  const declarer = resolveRelativeSeat(task.deal.fixedSeat, "partner");
+  const declarer =
+    target.declarer ?? resolveRelativeSeat(task.deal.fixedSeat, "partner");
   const strain = target.strain === "NT" ? "N" : target.strain;
 
   return `PRIMARY SCORER: V${target.level}${strain} BY ${declarer}`;

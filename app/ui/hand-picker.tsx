@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 
 const SUITS = [
@@ -116,6 +116,15 @@ export default function HandPicker({
   const [hand, setHand] = useState<HandState>(initialHand);
   const [handTextInput, setHandTextInput] = useState(initialHandText);
   const [textError, setTextError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const editorRef = useRef<HTMLDetailsElement>(null);
+  const handInputRef = useRef<HTMLInputElement>(null);
+  const editorId = useId();
+
+  function openEditor() {
+    if (editorRef.current) editorRef.current.open = true;
+    handInputRef.current?.focus();
+  }
 
   const selectedCount = useMemo(
     () => Object.values(hand).reduce((sum, cards) => sum + cards.length, 0),
@@ -184,10 +193,17 @@ export default function HandPicker({
         value={handTextInput.trim().toUpperCase()}
       />
 
-      <div className="hand-summary">
-        <div className="rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1">
+      <button
+        type="button"
+        aria-label="Edit displayed hand"
+        aria-controls={editorId}
+        aria-expanded={isEditing}
+        onClick={openEditor}
+        className="hand-summary w-full cursor-pointer rounded-lg text-left transition hover:bg-blue-50/50"
+      >
+        <span className="block rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1">
           {SUITS.map((suit, index) => (
-            <div
+            <span
               key={suit.key}
               className="flex items-center gap-5 border-b border-slate-200 py-1.5 last:border-0"
             >
@@ -197,10 +213,10 @@ export default function HandPicker({
               <span className="text-lg tracking-wider">
                 {hand[suit.key].join(" ") || "—"}
               </span>
-            </div>
+            </span>
           ))}
-        </div>
-        <div className="flex items-center justify-between text-sm text-slate-600">
+        </span>
+        <span className="flex items-center justify-between text-sm text-slate-600">
           <span>{selectedCount} / 13 cards</span>
           <span
             aria-label="Your seat: North"
@@ -208,9 +224,14 @@ export default function HandPicker({
           >
             N
           </span>
-        </div>
-      </div>
-      <details className="hand-editor">
+        </span>
+      </button>
+      <details
+        ref={editorRef}
+        id={editorId}
+        className="hand-editor"
+        onToggle={(event) => setIsEditing(event.currentTarget.open)}
+      >
         <summary className="cursor-pointer text-right text-sm font-medium text-blue-600">
           Edit hand
         </summary>
@@ -225,6 +246,7 @@ export default function HandPicker({
               </label>
 
               <input
+                ref={handInputRef}
                 id="selected-hand"
                 type="text"
                 value={handTextInput}

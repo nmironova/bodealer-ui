@@ -1,36 +1,21 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bodealer UI
 
-## Getting Started
+A Next.js application for configuring bridge deal analyses and reviewing output from the Bodealer/Walrus service.
 
-First, run the development server:
+## Project knowledge
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- [Working conventions](AGENTS.md): guidance for contributors and coding agents.
+- [Project context](docs/project-context.md): architecture, product decisions, file compatibility, validation commands, and known limitations.
+
+## Local development
+
+Run commands from this directory, which is the application and Git root.
+
+```sh
+pnpm install --frozen-lockfile
+npm run dev -- --hostname 127.0.0.1
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [New analysis](http://127.0.0.1:3000/boards/new). Live task execution requires server-side `BODEALER_URL` and, for the proxy routes, `BODEALER_API_KEY` configuration. Keep credentials in local environment settings rather than source control.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See the [development and validation notes](docs/project-context.md#development-and-validation) for checks, browser test prerequisites, and existing tooling limitations.

@@ -13,6 +13,7 @@ const SIMPLE_FIELDS = new Set([
   "taskType",
   "contractLevel",
   "contractStrain",
+  "contractDeclarer",
   "boardsK",
   "postmortem",
   "hand",

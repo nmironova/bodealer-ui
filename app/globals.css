@@ -86,7 +86,7 @@ body {
   grid-template-columns: minmax(0, 1fr) 90px;
   gap: 16px;
 }
-.hand-summary > div:last-child {
+.hand-summary > span:last-child {
   flex-direction: column;
   justify-content: center;
   gap: 16px;
@@ -271,7 +271,7 @@ body {
 .hand-section .hand-summary {
   margin-block: 0;
 }
-.hand-summary > div:first-child > div {
+.hand-summary > span:first-child > span {
   padding-block: 0;
 }
 .hand-section .hand-editor {
