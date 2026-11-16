@@ -1,41 +1,29 @@
+import Link from "next/link";
 import { requireSession } from "../lib/auth/request";
-import DashboardTile from "../ui/dashboard-tile";
+import WorkspaceNavigation from "../ui/workspace-navigation";
+import DashboardContent from "./dashboard-content";
+import styles from "./dashboard.module.css";
 
 export default async function DashboardPage() {
   await requireSession();
   return (
-    <main className="mx-auto max-w-3xl p-6">
-      <h1 className="text-2xl font-semibold text-gray-900">Bodealer</h1>
-      <p className="mt-2 text-sm text-gray-600">
-        Create a board task, track progress, and review results.
-      </p>
-
-      <form action="/logout" method="post" className="mt-4">
-        <button className="cursor-pointer text-sm text-blue-700 underline">
-          Sign out
-        </button>
-      </form>
-
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <DashboardTile
-          href="/boards/new"
-          title="New Board"
-          description="Create a new calculation task."
-          icon={{ src: "/hearts.png", alt: "Heart suit" }}
-        />
-        <DashboardTile
-          href="/boards/running"
-          title="Running Boards"
-          description="See tasks in progress and queued."
-          icon={{ src: "/diamonds.png", alt: "Diamonds suit" }}
-        />
-        <DashboardTile
-          href="/boards/completed"
-          title="Completed Boards"
-          description="Browse finished tasks and results."
-          icon={{ src: "/clubs.png", alt: "Clubs suit" }}
-        />
-      </div>
-    </main>
+    <>
+      <WorkspaceNavigation active="dashboard" className={styles.navigation} />
+      <main className={styles.page}>
+        <header className={styles.welcome}>
+          <div>
+            <h1>Your bridge workspace</h1>
+            <p>
+              Analyze hands, test bidding and play restrictions, and explore
+              results with Walrus/Oscar.
+            </p>
+          </div>
+          <Link href="/boards/new" className={styles.primaryAction}>
+            <span aria-hidden="true">+</span> New analysis
+          </Link>
+        </header>
+        <DashboardContent />
+      </main>
+    </>
   );
 }

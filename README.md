@@ -83,7 +83,7 @@ Required upstream contracts remain:
 - `GET /tasks/:id`: running/completed/failed/cancelled status with available `resultText` or `result` and/or `logTail`.
 - `DELETE /tasks/:id`: cancel the task; HTTP 204 is supported.
 
-The old setup mixed unauthenticated multipart uploads with `X-API-Key` proxy calls. All paths now use Bearer authentication. Confirm backend support before deploying the UI. Running/Completed list pages remain placeholders; no listing API was invented. Invited players share access; there is no per-player task ownership.
+The old setup mixed unauthenticated multipart uploads with `X-API-Key` proxy calls. All paths now use Bearer authentication. Confirm backend support before deploying the UI. The dashboard uses the backend’s existing `GET /tasks` through an authenticated local proxy for counts and the five newest task summaries. Names and numeric progress are not available in list records, and no individual task details page exists yet. Running/Completed list pages remain placeholders. Invited players share access; there is no per-player task ownership.
 
 ## Deployment and rotation
 

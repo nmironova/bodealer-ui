@@ -38,6 +38,16 @@ The app uses Next.js 16.1.1 App Router, React 19.2.3, TypeScript, Tailwind CSS 4
 | `tests/api/task-status.spec.ts`     | Status normalization and output preservation tests                                              |
 | `tests/new-board.spec.ts`           | File handling, hand editing, swapping, console interaction, and responsive layout tests         |
 
+## Dashboard design and data
+
+`/dashboard` has a compact workspace header, New analysis action, Running/Queued/Completed summary cards, and a Recent analyses panel. The shared `app/ui/workspace-navigation.tsx` reuses the existing navy header. The dashboard includes its active Dashboard link; `/boards/new` uses the same component with its original navigation items, markup, and classes to preserve its layout. Tasks and Completed pages are unchanged.
+
+`app/dashboard/dashboard-content.tsx` fetches the authenticated local `GET /api/tasks` on mount and refreshes every 15 seconds. That API uses the existing session guard and server-only Bearer helper to call the backend's real `GET /tasks`. It returns only `id`, `status`, and `createdAt`, excluding process paths, PIDs, errors, and other internal state. The pure `app/lib/task-list.ts` validates the complete response, derives counts, and sorts the five newest analyses. Completed counts include only `completed`, not failed/cancelled tasks. Dates display in the browser's locale/timezone.
+
+Loading and unavailable counts use non-numeric placeholders; the empty state appears only after a successful empty response. Errors offer Retry; expired sessions offer Sign in. Unexpected response schemas are unavailable, never silently converted to an empty list.
+
+The inspected backend stores no task name or numeric progress in its list records, so rows use an `Analysis <short ID>` fallback and omit progress. No individual task/result details page exists in this UI; recent rows deliberately have no invented or misleading detail links. View all goes to `/boards/running`, which remains a placeholder outside this redesign's scope. Adding metadata/progress or individual task views is future work.
+
 ## Login visual design
 
 The login uses a centered card with a 512px maximum width on a pale blue-gray background, Bodealer branding and Private beta badge, a decorative CSS fan of four suits, and the heading “Welcome to the table.” Styles are isolated in `app/login/login.module.css`; dashboard and analysis layouts are unaffected. The form has a show/hide toggle and retains its password locally after validation errors. Server-side authentication, rate limits, session/cookie settings, and environment configuration remain unchanged. There are no animations or external image/UI dependencies. Browser tests cover keyboard navigation, focus, Enter submission, password retention/visibility, mobile overflow, and a reduced-height viewport simulating keyboard constraints.
@@ -114,11 +124,11 @@ Playwright starts and stops an isolated Next.js app on port 3210 and a fake back
 
 Pure tests in `tests/api/` cover configuration preparation, declarer/file compatibility, session cryptography and expiry, local rate-limit windows, and task-status normalization. `tests/api/declarer.spec.ts` now tests pure preparation; the auth suite verifies the actual multipart Server Action upload.
 
-The UI suite also checks incomplete-hand editing by clicking the hand summary, keyboard activation, Save/Load/Clear, restriction swapping, output expansion, responsive overflow, and desktop run-button visibility. Test server ports must be free; the harness deliberately does not reuse unrelated servers.
+Dashboard tests cover real-list proxy authentication/field filtering, counts, five newest records, loading/error/empty states, Retry, navigation, and responsive layout. The UI suite also checks incomplete-hand editing by clicking the hand summary, keyboard activation, Save/Load/Clear, restriction swapping, output expansion, responsive overflow, and desktop run-button visibility. Test server ports must be free; the harness deliberately does not reuse unrelated servers.
 
 ## Known limitations and previous validation
 
-- Running Boards and Completed Boards pages are placeholders; task listing and persistent results are not implemented.
+- Running Boards and Completed Boards pages remain placeholders. The dashboard now lists task summaries through the backend’s existing listing endpoint; individual task details pages are still missing.
 - Live VPS/solver execution and production Firewall enforcement still need manual verification. The test backend proves UI integration behavior only.
 - At redesign delivery on 2026-11-09, nine tests, the production build, TypeScript, changed-file lint, and formatting checks passed. After adding Clear, TypeScript, focused lint, and formatting checks passed. These are historical results, not a claim that checks were rerun for every later change.
 - On 2026-11-13, the declarer setting passed 11 API/config tests (including mocked multipart uploads), five browser tests, TypeScript, focused lint, formatting checks, and a production build. No live solver run was performed.

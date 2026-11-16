@@ -24,9 +24,31 @@ createServer(async (request, response) => {
     `Bearer ${testEnvironment.BACKEND_API_TOKEN}`
   )
     return json(401, { error: "Invalid service credential" });
+  if (request.url === "/tasks" && request.method === "GET") {
+    return json(
+      200,
+      [...tasks.entries()].map(([id, task]) => ({
+        id,
+        status: task.cancelled
+          ? "cancelled"
+          : task.polls > 1
+            ? "completed"
+            : "running",
+        createdAt: task.createdAt,
+        pid: 1234,
+        dir: "/private/jobs",
+        walrusPath: "/private/walrus",
+        error: testEnvironment.BACKEND_API_TOKEN,
+      })),
+    );
+  }
   if (request.url === "/tasks" && request.method === "POST") {
     const id = `task-${tasks.size + 1}`;
-    tasks.set(id, { polls: 0, cancelled: false });
+    tasks.set(id, {
+      polls: 0,
+      cancelled: false,
+      createdAt: new Date().toISOString(),
+    });
     return json(202, { id });
   }
   if (request.url === "/tasks/failed-test")
