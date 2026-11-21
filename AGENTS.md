@@ -15,7 +15,7 @@ This file applies to this repository. Read [docs/project-context.md](docs/projec
 - Keep task operations behind a verified beta session and use the server-only backend helper with Bearer authentication. Proxy redirects alone are insufficient. Never expose authentication secrets or backend credentials to client components.
 
 - Preserve backend API contracts, solver behavior, board file compatibility, and restriction validation unless the requested task explicitly changes them.
-- The primary workflow is repeated analysis of the same hand. Keep setup and results visible together on desktop and stack them on small screens.
+- The primary workflow is repeated analysis of the same hand. Use inline initial setup, an editable two-column workbench after submission on desktop, and Setup/Results tabs on mobile. Keep each editor mounted once so hidden panels and closed drawers retain form values.
 - Configuration edits must retain previous results and mark them as belonging to a previous configuration. Starting a new run may replace the displayed output.
 - Keep incomplete hands editable. Require exactly 13 cards when submitting an analysis.
 - Preserve every restriction editor, advanced combinations, and LHO/RHO swapping. Compact summaries must reflect actual field values.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   TASK_STATUS,
   type TaskStatus,
@@ -27,6 +27,7 @@ export default function ResultsPanel({
   const [copyMessage, setCopyMessage] = useState("");
   const observedTask = useRef<string>(undefined);
   const dialog = useRef<HTMLDialogElement>(null);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     if (!taskId || starting) return;
@@ -79,6 +80,14 @@ export default function ResultsPanel({
 
   const displayedOutput = starting ? "" : output;
 
+  const lineCount = useMemo(() => {
+    if (!displayedOutput) return 0;
+    let count = 1;
+    for (let i = 0; i < displayedOutput.length; i += 1)
+      if (displayedOutput.charCodeAt(i) === 10) count += 1;
+    return count;
+  }, [displayedOutput]);
+
   async function copyOutput() {
     try {
       await navigator.clipboard.writeText(displayedOutput);
@@ -117,11 +126,12 @@ export default function ResultsPanel({
       </div>
       {stale && !starting && (
         <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          <strong className="mb-1 block">Settings modified</strong>
           Settings have changed. These results are from the previous
           configuration. Run again to update.
         </p>
       )}
-      <div className="my-5 rounded-lg border border-slate-200 bg-slate-50/70 p-5">
+      <div className="my-4 rounded-lg border border-slate-200 bg-slate-50/70 p-4">
         <h3 className="font-semibold text-slate-900">
           {starting
             ? "Preparing your analysis"
@@ -138,7 +148,7 @@ export default function ResultsPanel({
         <p className="mt-2 text-sm leading-6 text-slate-500">
           {!taskId && !starting
             ? "Set your hand, add restrictions, and run an analysis. Your results will stay here as you adjust the setup."
-            : "Review the original Walrus output below. Summary statistics are unavailable for this output format."}
+            : "Original Walrus output. It updates while the analysis runs."}
         </p>
         {taskId && (
           <p className="mt-3 break-all font-mono text-xs text-slate-400">
@@ -169,9 +179,7 @@ export default function ResultsPanel({
       <section className="rounded-lg border border-slate-200 p-2">
         <div className="mb-2 flex items-center justify-end gap-3 px-2 text-sm">
           <span className="mr-auto text-xs text-slate-500">
-            {displayedOutput
-              ? `${displayedOutput.split("\n").length} lines`
-              : "No output yet"}
+            {displayedOutput ? `${lineCount} lines` : "No output yet"}
           </span>
           <button
             type="button"
@@ -183,7 +191,10 @@ export default function ResultsPanel({
           </button>
           <button
             type="button"
-            onClick={() => dialog.current?.showModal()}
+            onClick={() => {
+              setExpanded(true);
+              dialog.current?.showModal();
+            }}
             className="output-action"
           >
             ⤢ Expand
@@ -203,6 +214,7 @@ export default function ResultsPanel({
         ref={dialog}
         className="output-dialog"
         aria-labelledby="expanded-output-title"
+        onClose={() => setExpanded(false)}
       >
         <div className="flex items-center justify-between gap-4 pb-4">
           <h2 id="expanded-output-title" className="text-lg font-semibold">
@@ -225,7 +237,7 @@ export default function ResultsPanel({
             </button>
           </div>
         </div>
-        {consoleView(true)}
+        {expanded && consoleView(true)}
         <p role="status" className="mt-2 text-xs">
           {copyMessage}
         </p>

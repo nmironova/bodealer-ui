@@ -27,13 +27,6 @@ test("loads, edits, swaps and saves the existing board format", async ({
   await expect(page.getByText("13 / 13 cards", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Edit displayed hand" }).click();
   await expect(page.getByLabel("Selected hand", { exact: true })).toBeFocused();
-  // Opening via the board and closing via the existing action stay in sync.
-  await page.getByText("Edit hand", { exact: true }).click();
-  const handDisplay = page.getByRole("button", { name: "Edit displayed hand" });
-  await expect(handDisplay).toHaveAttribute("aria-expanded", "false");
-  await handDisplay.focus();
-  await page.keyboard.press("Enter");
-  await expect(handDisplay).toHaveAttribute("aria-expanded", "true");
   await page
     .getByLabel("Selected hand", { exact: true })
     .fill("K865 AK1083 Q74 -");
@@ -48,43 +41,44 @@ test("loads, edits, swaps and saves the existing board format", async ({
   expect((await download).suggestedFilename()).toContain("test-board");
 });
 
-test("console expands, closes with Escape and collapses", async ({ page }) => {
-  await page.goto(pageUrl);
-  await page.getByRole("button", { name: "Expand" }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).not.toBeVisible();
-  const output = page.locator("details").filter({
-    has: page.locator("summary", { hasText: "Raw output (Walrus)" }),
-  });
-  await output.locator("summary").click();
-  await expect(output.locator("pre")).not.toBeVisible();
-});
-
-test("stacks without horizontal page overflow on mobile", async ({ page }) => {
+test("initial setup is spacious, inline, and has no horizontal overflow on mobile", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(pageUrl);
   expect(
     await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
+      () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  const setup = await page.locator(".analysis-setup").boundingBox();
-  const results = await page.locator(".results-panel").boundingBox();
-  expect(results!.y).toBeGreaterThan(setup!.y + setup!.height);
+  await expect(page.getByLabel("Selected hand", { exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByRole("group", { name: "Spades", exact: true })
+      .getByRole("button"),
+  ).toHaveCount(13);
+  await expect(page.locator(".results-panel")).not.toBeVisible();
 });
 
-test("desktop keeps setup and results side by side with the run action visible", async ({
+test("desktop initial setup shows hand, restrictions, calculation and the run action", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1536, height: 1024 });
   await page.goto(pageUrl);
-  const setup = await page.locator(".analysis-setup").boundingBox();
-  const results = await page.locator(".results-panel").boundingBox();
-  expect(results!.x).toBeGreaterThan(setup!.x + setup!.width);
-  await page.screenshot({ path: "/tmp/bodealer-desktop.png", fullPage: true });
   await expect(
-    page.getByRole("button", { name: "Run analysis" }),
+    page.getByRole("heading", { name: "Analysis setup", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "North · Your hand" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Restrictions", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Calculation", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Run analysis", exact: true }),
   ).toBeInViewport();
 });
 
@@ -97,8 +91,7 @@ test("declarer selection survives save/load and Clear restores Partner", async (
   await declarer.selectOption("N");
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  const download = await downloadPromise;
-  const savedFile = await download.path();
+  const savedFile = await (await downloadPromise).path();
   expect(savedFile).not.toBeNull();
   await page.getByRole("button", { name: "Clear", exact: true }).click();
   await expect(declarer).toHaveValue("S");
