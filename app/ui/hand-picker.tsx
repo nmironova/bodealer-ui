@@ -1,13 +1,13 @@
 "use client";
 
-import { useId, useMemo, useRef, useState } from "react";
-import Image from "next/image";
+import { useMemo, useState } from "react";
+import EditorSection from "./editor-section";
 
 const SUITS = [
-  { key: "S", icon: "/spades.png", color: "text-gray-900" },
-  { key: "H", icon: "/hearts.png", color: "text-red-600" },
-  { key: "D", icon: "/diamonds.png", color: "text-red-600" },
-  { key: "C", icon: "/clubs.png", color: "text-gray-900" },
+  { key: "S", symbol: "♠", name: "Spades", color: "text-gray-900" },
+  { key: "H", symbol: "♥", name: "Hearts", color: "text-red-600" },
+  { key: "D", symbol: "♦", name: "Diamonds", color: "text-red-600" },
+  { key: "C", symbol: "♣", name: "Clubs", color: "text-gray-900" },
 ] as const;
 
 const RANKS = [
@@ -104,28 +104,28 @@ function parseHandText(text: string): HandState | null {
   };
 }
 
+export function isCompleteHandText(text: string) {
+  const parsed = parseHandText(text);
+  return Boolean(
+    parsed &&
+    Object.values(parsed).reduce((sum, cards) => sum + cards.length, 0) === 13,
+  );
+}
+
 export default function HandPicker({
   defaultHandText,
   onHandChange,
+  compact = false,
 }: {
   defaultHandText?: string;
   onHandChange?: (value: string) => void;
+  compact?: boolean;
 }) {
   const initialHand = parseHandText(defaultHandText ?? "") ?? INITIAL_HAND;
   const initialHandText = defaultHandText ?? handToText(INITIAL_HAND);
   const [hand, setHand] = useState<HandState>(initialHand);
   const [handTextInput, setHandTextInput] = useState(initialHandText);
   const [textError, setTextError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const editorRef = useRef<HTMLDetailsElement>(null);
-  const handInputRef = useRef<HTMLInputElement>(null);
-  const editorId = useId();
-
-  function openEditor() {
-    if (editorRef.current) editorRef.current.open = true;
-    handInputRef.current?.focus();
-  }
-
   const selectedCount = useMemo(
     () => Object.values(hand).reduce((sum, cards) => sum + cards.length, 0),
     [hand],
@@ -186,155 +186,99 @@ export default function HandPicker({
   }
 
   return (
-    <div className="space-y-4">
+    <EditorSection
+      title="North · Your hand"
+      compact={compact}
+      editLabel="Edit hand"
+      className="hand-section"
+      keepSummaryInline
+      badge={
+        <span
+          className={`hand-count ${selectedCount === 13 ? "complete" : ""}`}
+        >
+          {selectedCount} / 13 cards
+        </span>
+      }
+      summary={(open, expanded, id) => (
+        <button
+          type="button"
+          aria-label="Edit displayed hand"
+          aria-controls={id}
+          aria-expanded={expanded}
+          onClick={open}
+          className="hand-summary"
+        >
+          {SUITS.map((suit) => (
+            <span key={suit.key} className="suit-summary-row">
+              <span className={`suit-symbol ${suit.color}`} aria-hidden="true">
+                {suit.symbol}
+              </span>
+              <span>{hand[suit.key].join(" ") || "—"}</span>
+            </span>
+          ))}
+        </button>
+      )}
+    >
       <input
         type="hidden"
         name="hand"
         value={handTextInput.trim().toUpperCase()}
       />
-
-      <button
-        type="button"
-        aria-label="Edit displayed hand"
-        aria-controls={editorId}
-        aria-expanded={isEditing}
-        onClick={openEditor}
-        className="hand-summary w-full cursor-pointer rounded-lg text-left transition hover:bg-blue-50/50"
-      >
-        <span className="block rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1">
-          {SUITS.map((suit, index) => (
-            <span
-              key={suit.key}
-              className="flex items-center gap-5 border-b border-slate-200 py-1.5 last:border-0"
-            >
-              <span className={`w-5 text-center text-xl ${suit.color}`}>
-                {["♠", "♥", "♦", "♣"][index]}
-              </span>
-              <span className="text-lg tracking-wider">
-                {hand[suit.key].join(" ") || "—"}
-              </span>
-            </span>
-          ))}
-        </span>
-        <span className="flex items-center justify-between text-sm text-slate-600">
-          <span>{selectedCount} / 13 cards</span>
-          <span
-            aria-label="Your seat: North"
-            className="rounded-md bg-blue-100 px-3 py-1 font-semibold text-blue-700"
+      <div className="card-grid" aria-label="Choose your North hand">
+        {SUITS.map((suit) => (
+          <div
+            key={suit.key}
+            className="card-suit"
+            role="group"
+            aria-label={suit.name}
           >
-            N
-          </span>
-        </span>
-      </button>
-      <details
-        ref={editorRef}
-        id={editorId}
-        className="hand-editor"
-        onToggle={(event) => setIsEditing(event.currentTarget.open)}
-      >
-        <summary className="cursor-pointer text-right text-sm font-medium text-blue-600">
-          Edit hand
-        </summary>
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex-1">
-              <label
-                htmlFor="selected-hand"
-                className="text-sm font-medium text-gray-900"
-              >
-                Selected hand
-              </label>
-
-              <input
-                ref={handInputRef}
-                id="selected-hand"
-                type="text"
-                value={handTextInput}
-                onChange={(e) => handleTextChange(e.target.value)}
-                className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              />
-
-              {textError ? (
-                <p className="mt-2 text-sm text-red-700">{textError}</p>
-              ) : (
-                <p className="mt-2 text-xs text-gray-500">
-                  Format:{" "}
-                  <span className="font-mono">
-                    spades hearts diamonds clubs
-                  </span>
-                </p>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3 sm:pt-8">
-              <span
-                className={[
-                  "rounded-full border px-2.5 py-1 text-sm font-semibold",
-                  selectedCount === 13
-                    ? "border-green-200 bg-green-50 text-green-700"
-                    : "border-gray-200 bg-gray-50 text-gray-600",
-                ].join(" ")}
-              >
-                {selectedCount}/13 cards
-              </span>
-              <button
-                type="button"
-                onClick={clearHand}
-                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
-              >
-                Clear
-              </button>
+            <span className={`suit-symbol ${suit.color}`} aria-hidden="true">
+              {suit.symbol}
+            </span>
+            <div className="card-ranks">
+              {RANKS.map((rank) => {
+                const selected = hand[suit.key].includes(rank);
+                return (
+                  <button
+                    key={`${suit.key}-${rank}`}
+                    type="button"
+                    aria-label={`${suit.name} ${rank}`}
+                    aria-pressed={selected}
+                    onClick={() => toggleCard(suit.key, rank)}
+                    disabled={!selected && selectedCount >= 13}
+                    className={`rank-card ${selected ? "selected" : ""}`}
+                  >
+                    {rank}
+                  </button>
+                );
+              })}
             </div>
           </div>
+        ))}
+      </div>
+      <div className="hand-text-editor">
+        <label htmlFor="selected-hand">Selected hand</label>
+        <div>
+          <input
+            id="selected-hand"
+            type="text"
+            value={handTextInput}
+            onChange={(event) => handleTextChange(event.target.value)}
+            aria-invalid={Boolean(textError)}
+            aria-describedby="hand-format"
+          />
+          <button type="button" className="edit-action" onClick={clearHand}>
+            Clear hand
+          </button>
         </div>
-
-        <div className="space-y-3">
-          {SUITS.map((suit) => (
-            <div
-              key={suit.key}
-              className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-50">
-                  <Image
-                    src={suit.icon}
-                    alt={suit.key}
-                    width={22}
-                    height={22}
-                    className="opacity-90"
-                  />
-                </div>
-
-                <div className="grid flex-1 grid-cols-4 gap-1.5 sm:grid-cols-7 xl:grid-cols-7">
-                  {RANKS.map((rank) => {
-                    const selected = hand[suit.key].includes(rank);
-
-                    return (
-                      <button
-                        key={`${suit.key}-${rank}`}
-                        type="button"
-                        onClick={() => toggleCard(suit.key, rank)}
-                        disabled={!selected && selectedCount >= 13}
-                        className={[
-                          "h-9 rounded-md border px-2 text-sm font-semibold transition",
-                          "disabled:cursor-not-allowed disabled:opacity-40",
-                          selected
-                            ? suit.color.includes("red")
-                              ? "border-red-300 bg-red-50 text-red-700"
-                              : "border-gray-400 bg-gray-200 text-gray-900"
-                            : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
-                        ].join(" ")}
-                      >
-                        {rank}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </details>
-    </div>
+        <p
+          id="hand-format"
+          className={textError ? "field-error" : "field-hint"}
+        >
+          {textError ??
+            "Text format: spades hearts diamonds clubs. Use - for an empty suit."}
+        </p>
+      </div>
+    </EditorSection>
   );
 }

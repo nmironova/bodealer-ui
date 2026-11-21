@@ -234,7 +234,13 @@ test("form action submits multipart config promptly, polls output, and never put
     ])
       expect(text).not.toContain(secret);
   }
+  await page
+    .getByRole("button", { name: "Edit calculation", exact: true })
+    .click();
   await page.getByLabel("Declarer", { exact: true }).selectOption("S");
+  await page
+    .getByRole("button", { name: "Close Edit calculation", exact: true })
+    .click();
   await expect(
     page.getByText("Settings have changed.", { exact: false }),
   ).toBeVisible();

@@ -1,12 +1,12 @@
 # Bodealer UI project context
 
-Last reviewed: 2026-11-16. This document records verified implementation details and decisions from the project conversation. Check the source when behavior changes.
+Last reviewed: 2026-11-21. This document records verified implementation details and decisions from the project conversation. Check the source when behavior changes.
 
 ## Purpose and design decisions
 
 Bodealer UI configures bridge deal analyses and displays output from the external Bodealer/Walrus service. The main workflow is to select a hand, tune contracts and restrictions, run an analysis, inspect output, and repeat without navigating away.
 
-The New Board redesign was guided by the supplied “Expanded Walrus Output Console” image. The user approved the resulting UI. Its desktop layout uses approximately 42% for Analysis setup and 58% for Results; below 1024px the sections stack. The visual style uses compact controls, pale panels, blue primary actions, and a dark raw-output console.
+The current analysis page follows the hybrid workbench proposals in `docs/design/`: spacious initial setup with inline hand selection, then an editable 35/65 setup/results workspace after submission. On mobile, workbench mode shows Setup and Results tabs rather than stacking both panels. The visual style uses compact controls, pale panels, blue primary actions, and a dark raw-output console.
 
 Clear was subsequently added beside Load and Save. It clears board details, hand, restrictions, and combinations and restores calculation defaults. Previous results remain visible. It does not cancel a running task.
 
@@ -37,6 +37,21 @@ The app uses Next.js 16.1.1 App Router, React 19.2.3, TypeScript, Tailwind CSS 4
 | `tests/api/declarer.spec.ts`        | Declarer config uploads, validation, board-file round trips, and legacy defaults                |
 | `tests/api/task-status.spec.ts`     | Status normalization and output preservation tests                                              |
 | `tests/new-board.spec.ts`           | File handling, hand editing, swapping, console interaction, and responsive layout tests         |
+
+## Hybrid analysis workbench
+
+- `new-board.form.tsx` remains the controller for string-valued configuration, file actions, submitted snapshots, Server Action execution, cancellation, and the last task. Authentication, backend routes, DTO conversion, Walrus generation, and JSON formats were not rewritten for this redesign.
+- `app/ui/editor-section.tsx` provides an inline editor during setup and a native modal drawer in workbench mode. Editor children stay mounted once inside the form, so closed drawers and hidden mobile panels retain values and participate in submission and Save. Native dialogs provide focus containment and Escape/Done closure; no UI dependency was added.
+- `app/ui/hand-picker.tsx` retains the original parser, selection state, rank order, and serialization. The selected hand is always four vertical suit rows. The single editor shows suit symbols, all thirteen ranks, selected states, and text input. Initial setup displays it inline; after submission the summary/Edit action opens its drawer.
+- `restriction-editors.tsx` contains the extracted existing ranges, suit points, shape checkbox, and any/exclusion editors. `restrictions-panel.tsx` provides compact active summaries and per-player opening. Field names and LHO/RHO swapping are unchanged. Numeric range controls show bounds/inverted-range errors without clamping values.
+- `calculation-editor.tsx` preserves all existing controls and provides the compact contract/declarer/deals/postmortem summary. It uses the same mounted fields in both modes.
+- The parent adds client-side safeguards using the existing restriction/combination validators and hand parser before an explicit Run action. It retains authoritative server validation. Cross-hand feasibility checking remains deferred.
+- Completed output stays visible during configuration edits. Both the setup and results show Settings modified when the editable configuration differs from the submitted snapshot. Field changes never start a calculation automatically.
+- `results-panel.tsx` retains polling and output snapshots. Raw text remains untouched with two-axis scrolling, Copy, and Expand. The expanded text is mounted only while its dialog is open, and line counting avoids allocating a large array. The normal viewer is approximately 410px on desktop/390px on mobile, with a larger 75-viewport-height view.
+- `workbench.module.css` owns analysis/editor layout and responsive styling. `globals.css` retains shared navigation and raw-console styles; obsolete analysis-specific layout rules were removed. The analysis page supplies a scoped mobile navigation class without changing the dashboard.
+- Browser regressions cover initial setup, drawers after results, old-output retention, reruns using changed values, closed-drawer Save/Load, advanced restriction groups, mobile tabs, full-output Copy/Expand/scrolling, cancellation, and widths from 390 to 1536px.
+
+Screenshots from synthetic test data are saved under `artifacts/workbench/`: `desktop-setup.png`, `desktop-workbench.png`, and `mobile-results.png`. Live VPS smoke testing is still separate; the suite does not contact the deployed backend.
 
 ## Dashboard design and data
 
@@ -98,7 +113,7 @@ The app retains the last task and its submitted configuration separately from cu
 
 The console uses the latest available `resultText`, falling back to `logTail`. These responses are snapshots; do not append overlapping tails. A server-provided tail may contain only part of the process output. The client cannot recover text the server never provided.
 
-The expanded console's normal height is 300px with scrolling in both directions, monospace type, preserved whitespace, and no line wrapping. Expand opens a native modal dialog with a roughly 75-viewport-height console. Close and Escape return to the dashboard. Copy uses the Clipboard API to copy the entire displayed output snapshot, regardless of scroll position.
+The workbench console's normal height is approximately 410px with scrolling in both directions, monospace type, preserved whitespace, and no line wrapping. Expand opens a native modal dialog with a roughly 75-viewport-height console. Close and Escape return to the dashboard. Copy uses the Clipboard API to copy the entire displayed output snapshot, regardless of scroll position.
 
 Probability, number of deals analyzed, average score, and trick histogram are intentionally omitted. The available API returns text, and no reliable extraction contract or representative real-output fixtures were established. The reference image is a design reference, not evidence for a parser. A future parser must be separate from presentation and tested against real output samples before adding metrics.
 

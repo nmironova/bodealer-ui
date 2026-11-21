@@ -1,0 +1,848 @@
+.workspace {
+  color: #142039;
+  font-size: 14px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 0 0 20px;
+}
+.toolbar h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.7px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.toolbar p {
+  margin: 6px 0 0;
+  color: #63728b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.fileActions {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.fileActions button,
+.workspace :global(.edit-action) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid #d8e1ed;
+  border-radius: 7px;
+  background: #fff;
+  color: #253653;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.fileActions button:hover,
+.workspace :global(.edit-action):hover {
+  border-color: #a8bfe2;
+  background: #f4f8ff;
+}
+.workspace :is(button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid #2876ed;
+  outline-offset: 3px;
+}
+.workspace button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.layout {
+  display: grid;
+  gap: 20px;
+  align-items: start;
+}
+.initial .layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+.workbench .layout {
+  grid-template-columns: minmax(350px, 35fr) minmax(0, 65fr);
+}
+.setup {
+  min-width: 0;
+}
+.metadata {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.3fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.metadata label {
+  display: block;
+  margin-bottom: 6px;
+  color: #43526b;
+  font-size: 12px;
+  font-weight: 500;
+}
+.metadata label span {
+  margin-left: 6px;
+  font-weight: 400;
+  color: #8994a6;
+}
+.metadata input,
+.metadata textarea {
+  display: block;
+  height: 36px;
+  min-height: 36px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d6dfec;
+  border-radius: 7px;
+  background: #fff;
+  color: #142039;
+  font-size: 13px;
+  line-height: 18px;
+}
+.metadata textarea {
+  resize: vertical;
+}
+.sections {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(330px, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.sections > :global(.hand-section) {
+  grid-column: 1;
+  grid-row: 1;
+}
+.sections > :global(.restrictions-section) {
+  grid-column: 2;
+  grid-row: 1 / 3;
+}
+.sections > :global(.calculation-section) {
+  grid-column: 1;
+  grid-row: 2;
+}
+.workspace :global(.work-section) {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #dce4ef;
+  border-radius: 11px;
+  background: #fff;
+}
+.workspace :global(.section-heading) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.workspace :global(.section-heading h2) {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.3px;
+}
+.workspace :global(.section-heading-actions) {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+}
+.workspace :global(.hand-count) {
+  border-radius: 999px;
+  background: #f0f3f8;
+  color: #68778c;
+  padding: 4px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.workspace :global(.hand-count.complete) {
+  background: #e9f9ee;
+  color: #168244;
+}
+.workspace :global(.hand-layout) {
+  display: grid;
+  grid-template-columns: 155px minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+.workspace :global(.hand-summary) {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #e0e7f1;
+  border-radius: 8px;
+  background: #f7f9fd;
+  text-align: left;
+  cursor: pointer;
+}
+.workspace :global(.hand-summary:hover) {
+  border-color: #acc5ed;
+}
+.workspace :global(.suit-summary-row) {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+  padding: 6px 0;
+  border-bottom: 1px solid #e0e6f0;
+  font-size: 17px;
+  line-height: 1.5;
+}
+.workspace :global(.suit-summary-row:last-child) {
+  border: 0;
+}
+.workspace :global(.suit-symbol) {
+  text-align: center;
+  font-size: 21px;
+  line-height: 1.3;
+}
+.workspace :global(.section-editor) {
+  color: #142039;
+}
+.workspace :global(.editor-inline) {
+  position: static;
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+}
+.workspace :global(.editor-inline[open]) {
+  display: block;
+}
+.workspace :global(.editor-fields) {
+  min-width: 0;
+}
+.workspace :global(.card-grid) {
+  display: grid;
+  gap: 6px;
+}
+.workspace :global(.card-suit) {
+  display: grid;
+  grid-template-columns: 23px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
+.workspace :global(.card-suit > .suit-symbol) {
+  align-self: center;
+}
+.workspace :global(.card-ranks) {
+  display: grid;
+  grid-template-columns: repeat(13, minmax(0, 1fr));
+  gap: 4px;
+}
+.workspace :global(.rank-card) {
+  height: 32px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid #d7dfeb;
+  border-radius: 5px;
+  background: #fff;
+  color: #263653;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.workspace :global(.rank-card:hover:enabled) {
+  border-color: #6e9be1;
+  background: #eff5ff;
+}
+.workspace :global(.rank-card.selected),
+.workspace :global(.rank-card.selected:hover) {
+  border-color: #0961f4;
+  background: #0961f4;
+  color: #fff;
+}
+.workspace :global(.hand-text-editor) {
+  margin-top: 16px;
+}
+.workspace :global(.hand-text-editor label) {
+  display: block;
+  font-size: 12px;
+  color: #52627d;
+}
+.workspace :global(.hand-text-editor label span) {
+  margin-left: 8px;
+  letter-spacing: 5px;
+  color: #7c899b;
+}
+.workspace :global(.hand-text-editor > div) {
+  display: flex;
+  gap: 8px;
+  margin-top: 7px;
+}
+.workspace :global(.hand-text-editor input) {
+  min-width: 0;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d7dfeb;
+  border-radius: 6px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 12px;
+}
+.workspace :global(.hand-text-editor .edit-action) {
+  flex-shrink: 0;
+}
+.workspace :global(.field-hint) {
+  margin-top: 6px;
+  color: #7c889a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.workspace :global(.field-error),
+.workspace :global(.range-error) {
+  margin-top: 6px;
+  color: #b83243;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.workspace :global(.restriction-toolbar) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.workspace :global(.restriction-toolbar p) {
+  color: #7a879a;
+  font-size: 11px;
+}
+.workspace :global(.text-action) {
+  padding: 4px 0;
+  color: #0c5fe4;
+  font-size: 12px;
+  cursor: pointer;
+}
+.workspace :global(.restriction-players) {
+  display: grid;
+  gap: 8px;
+}
+.workspace :global(.restriction-row) {
+  min-width: 0;
+  border-color: #e2e8f1;
+  background: #fafbfe;
+}
+.workspace :global(.restriction-row > summary) {
+  padding: 10px;
+}
+.workspace :global(.restriction-row > summary h3) {
+  font-size: 13px;
+  font-weight: 600;
+}
+.workspace :global(.restriction-row > summary > div > div) {
+  width: 100%;
+}
+.workspace :global(.restriction-row[open] > summary > div > div > div) {
+  display: none;
+}
+.workspace :global(.restriction-row > div) {
+  padding: 10px;
+}
+.workspace :global(.range-row) {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) 64px 8px 64px;
+  align-items: center;
+  gap: 8px;
+}
+.workspace :global(.range-row input) {
+  height: 30px;
+  padding: 4px;
+  font-size: 12px;
+}
+.workspace :global(.range-row input[aria-invalid="true"]) {
+  border-color: #db7e8d;
+}
+.workspace :global(.range-error) {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.workspace :global(.advanced-editor) {
+  margin-top: 14px;
+}
+.workspace :global(.advanced-editor > summary) {
+  cursor: pointer;
+  color: #52627d;
+  font-size: 12px;
+}
+.workspace :global(.restriction-summary) {
+  display: grid;
+  grid-template-columns: 45px minmax(0, 1fr) 12px;
+  align-items: start;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 0;
+  text-align: left;
+  cursor: pointer;
+}
+.workspace :global(.restriction-summary strong) {
+  font-size: 12px;
+}
+.workspace :global(.restriction-summary > span) {
+  color: #52627d;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.workspace :global(.restriction-summary:hover > span) {
+  color: #075fe9;
+}
+.workspace :global(.summary-arrow) {
+  justify-self: end;
+}
+.workspace :global(.combination-count) {
+  display: block;
+  margin-top: 6px;
+  color: #73809a;
+  font-size: 11px;
+}
+.workspace :global(.calculation-fields) {
+  display: grid;
+  gap: 10px;
+}
+.workspace :global(.calculation-fields > .contents > div),
+.workspace :global(.run-settings > div) {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+.workspace :global(.calculation-fields > .contents > div) {
+  margin-bottom: 0;
+}
+.workspace :global(.calculation-fields label),
+.workspace :global(.calculation-fields span.block) {
+  font-size: 12px;
+}
+.workspace :global(.calculation-fields input[type="hidden"]) {
+  display: none;
+}
+.workspace :global(.calculation-fields select),
+.workspace :global(.calculation-fields input[type="number"]) {
+  margin-top: 0;
+  height: 33px;
+  padding-block: 4px;
+  font-size: 12px;
+}
+.workspace :global(.contract-options) {
+  display: grid;
+  grid-template-columns: 7fr 5fr;
+  gap: 8px;
+  margin: 0;
+}
+.workspace :global(.contract-options button) {
+  height: 31px;
+  font-size: 12px;
+}
+.workspace :global(.calculation-summary) {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+.workspace :global(.calculation-summary strong) {
+  padding: 8px 14px;
+  border: 1px solid #e1e7f1;
+  border-radius: 7px;
+  background: #f7f9fc;
+  font-size: 26px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.workspace :global(.calculation-summary > span) {
+  font-size: 12px;
+  color: #52627d;
+  line-height: 1.8;
+}
+.workspace :global(.calculation-summary small) {
+  display: block;
+  font-size: 11px;
+  color: #7c889a;
+}
+.runBar {
+  margin-top: 18px;
+}
+.runButton,
+.mobileEdit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row-reverse;
+  gap: 12px;
+  min-height: 42px;
+  padding: 10px 22px;
+  border: 1px solid #0c60ec;
+  border-radius: 8px;
+  background: #0b63f6;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.runButton:hover:enabled,
+.mobileEdit:hover {
+  background: #0856d9;
+}
+.initial .runBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.runHint {
+  margin: 0;
+  color: #8090a7;
+  font-size: 12px;
+}
+.results {
+  min-width: 0;
+}
+.initial .results {
+  display: none;
+}
+.workbench .setup {
+  padding: 16px;
+  border: 1px solid #dce4ef;
+  border-radius: 12px;
+  background: #fafbfd;
+}
+.workbench .metadata {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+.workbench .sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.workbench :global(.hand-layout) {
+  display: block;
+}
+.workbench :global(.hand-summary) {
+  max-width: 100%;
+}
+.workbench :global(.section-heading) {
+  margin-bottom: 9px;
+  flex-wrap: wrap;
+}
+.workbench :global(.section-heading-actions) {
+  margin-left: auto;
+}
+.workbench :global(.section-heading h2) {
+  font-size: 14px;
+}
+.workbench :global(.edit-action) {
+  min-height: 29px;
+  padding: 4px 9px;
+  font-size: 11px;
+}
+.workbench .runButton {
+  width: 100%;
+}
+.modified {
+  margin: 0 0 9px;
+  color: #a16b11;
+  font-size: 12px;
+}
+.validation {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid #f0d4aa;
+  border-radius: 8px;
+  background: #fffaf2;
+  color: #9d5c1a;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.validation ul {
+  margin: 5px 0 0;
+  padding-left: 18px;
+}
+.fileMessage {
+  margin: -8px 0 14px;
+  color: #338258;
+  font-size: 12px;
+}
+.workspace :global(.editor-drawer) {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(760px, 95vw);
+  height: 100dvh;
+  max-width: 100vw;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 24px;
+  border: 0;
+  border-left: 1px solid #d9e2ee;
+  border-radius: 14px 0 0 14px;
+  background: #fff;
+  overflow: auto;
+}
+.workspace :global(.editor-drawer)::backdrop {
+  background: #12223b66;
+}
+.workspace :global(.drawer-heading) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e3e9f2;
+}
+.workspace :global(.drawer-heading h2) {
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+.workspace :global(.drawer-heading > div > span) {
+  color: #8a96a8;
+  font-size: 12px;
+}
+.workspace :global(.editor-drawer .editor-fields) {
+  display: grid;
+  gap: 14px;
+}
+.workspace :global(.editor-drawer .restriction-toolbar) {
+  margin: 0;
+}
+.workspace :global(.editor-drawer .rank-card) {
+  height: 40px;
+}
+.workspace :global(.results-panel) {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #dce4ef;
+  border-radius: 12px;
+  background: #fff;
+}
+.workspace :global(.results-panel .walrus-console) {
+  height: 410px;
+}
+.workspace :global(.results-panel .walrus-console-expanded) {
+  height: 75dvh;
+}
+.mobileTabs,
+.mobileEdit {
+  display: none;
+}
+@media (max-width: 1280px) {
+  .initial :global(.hand-layout) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .initial :global(.hand-summary) {
+    max-width: 330px;
+  }
+}
+@media (max-width: 1050px) {
+  .sections {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sections > :global(.hand-section),
+  .sections > :global(.restrictions-section),
+  .sections > :global(.calculation-section) {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .sections > :global(.calculation-section) {
+    order: 2;
+  }
+  .sections > :global(.restrictions-section) {
+    order: 1;
+  }
+  .initial :global(.hand-layout) {
+    grid-template-columns: 160px minmax(0, 1fr);
+  }
+  .workbench .layout {
+    grid-template-columns: minmax(320px, 40fr) minmax(0, 60fr);
+  }
+}
+@media (max-width: 760px) {
+  .toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .toolbar h1 {
+    font-size: 23px;
+  }
+  .toolbar p {
+    font-size: 12px;
+  }
+  .metadata {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .initial :global(.hand-layout) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .initial :global(.hand-summary) {
+    max-width: none;
+  }
+  .workspace :global(.work-section) {
+    padding: 14px;
+  }
+  .workspace :global(.card-ranks) {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+  .workspace :global(.rank-card) {
+    min-height: 38px;
+    font-size: 13px;
+  }
+  .workspace :global(.hand-text-editor > div) {
+    flex-wrap: wrap;
+  }
+  .workspace :global(.hand-text-editor input) {
+    flex-basis: 100%;
+    min-height: 40px;
+  }
+  .workspace :global(.range-row) {
+    grid-template-columns: minmax(80px, 1fr) 62px 8px 62px;
+    gap: 6px;
+  }
+  .workspace :global(.range-row input) {
+    min-height: 38px;
+  }
+  .workspace :global(.restriction-toolbar) {
+    align-items: flex-start;
+  }
+  .workspace :global(.contract-options) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .workspace :global(.contract-options button),
+  .workspace :global(.calculation-fields select),
+  .workspace :global(.calculation-fields input[type="number"]) {
+    height: 38px;
+  }
+  .workspace :global(.calculation-fields > .contents > div),
+  .workspace :global(.run-settings > div) {
+    grid-template-columns: 74px minmax(0, 1fr);
+  }
+  .workbench .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .workbench .setup {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .workbench .mobileTabs {
+    display: flex;
+    margin-bottom: 16px;
+    padding: 4px;
+    border: 1px solid #d7e1ee;
+    border-radius: 10px;
+    background: #fff;
+  }
+  .mobileTabs button {
+    flex: 1;
+    min-height: 42px;
+    padding: 8px 16px;
+    border-radius: 7px;
+    color: #65758c;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .mobileTabs button[aria-selected="true"] {
+    background: #0b63f6;
+    color: white;
+  }
+  .workbench .setup[data-active="false"],
+  .workbench .results[data-active="false"] {
+    display: none;
+  }
+  .initial .runBar {
+    display: block;
+  }
+  .runButton {
+    width: 100%;
+    min-height: 44px;
+  }
+  .runHint {
+    margin-top: 10px;
+    text-align: center;
+  }
+  .workspace :global(.editor-drawer) {
+    width: 100vw;
+    max-width: 100vw;
+    border: 0;
+    border-radius: 0;
+    padding: 20px 16px;
+  }
+  .workspace :global(.results-panel) {
+    padding: 14px;
+  }
+  .workspace :global(.results-panel .walrus-console) {
+    height: 390px;
+    padding: 12px;
+    font-size: 11px;
+  }
+  .workspace :global(.results-panel .walrus-console-expanded) {
+    height: 75dvh;
+  }
+  .mobileEdit {
+    display: flex;
+    width: 100%;
+    margin-top: 14px;
+    min-height: 44px;
+  }
+}
+
+.workspace :global(.restriction-row > div) {
+  position: relative;
+}
+.workspace :global(.restriction-row > div > .space-y-2\.5 > :not(:last-child)) {
+  margin-bottom: 6px;
+}
+.workspace :global(.restriction-row > div > .mb-3) {
+  margin: 10px 0 0;
+  position: absolute;
+  bottom: 13px;
+  right: 10px;
+}
+.workspace :global(.restriction-row > div > .mb-3 button) {
+  padding: 3px 6px;
+  font-size: 10px;
+}
+.workspace :global(.restriction-row > div > details) {
+  margin-top: 10px;
+}
+.workspace :global(.restriction-row > div > label) {
+  margin: 12px 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  min-height: 24px;
+  padding-right: 112px;
+}
+.workbench :global(.suit-summary-row) {
+  padding-block: 3px;
+  font-size: 16px;
+}
+@media (max-width: 760px) {
+  .navigation {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .navigation nav {
+    width: 100%;
+    order: 3;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .navigation form {
+    margin-left: auto;
+  }
+  .workspace :global(.restriction-row > div > .mb-3) {
+    bottom: 15px;
+  }
+}
