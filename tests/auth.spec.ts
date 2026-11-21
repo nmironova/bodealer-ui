@@ -189,6 +189,7 @@ test("form action submits multipart config promptly, polls output, and never put
       JSON.stringify(
         createBoardFile({
           name: "Beta integration",
+          description: "Opening lead analysis",
           hand: "K865 AK1083 Q74 K",
           taskType: "ONE_SIDED_BIDDING_LEVEL",
           contractLevel: "3",
@@ -215,6 +216,9 @@ test("form action submits multipart config promptly, polls output, and never put
   expect(upload?.contentType).toContain("multipart/form-data; boundary=");
   expect(upload?.body).toContain('name="configFile"');
   expect(upload?.body).toContain("PRIMARY SCORER: V3N BY N");
+  expect(upload?.body).toContain(
+    "----------\nBeta integration\nOpening lead analysis\n",
+  );
   expect(upload?.authorization).toBe(
     `Bearer ${testEnvironment.BACKEND_API_TOKEN}`,
   );

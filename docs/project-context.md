@@ -78,6 +78,8 @@ Supported statuses are running, completed, failed, and cancelled. The normalizer
 
 ## Setup behavior and compatibility
 
+Walrus config must repeat the selected `TASK NAME` as the task-body heading after the opening divider. Descriptions follow that heading; they must not replace it. Otherwise Walrus remains in its task-search state and reports “Task not found.” Regression coverage uses the reported ABC123 board with and without descriptions.
+
 - Default calculation: `ONE_SIDED_BIDDING_LEVEL`, contract 4 spades with Partner (South) declaring, 10 thousand boards, postmortem `AUTO`, empty hand.
 - Enabled task types: one-sided bidding level and seek opening lead. Other listed types are disabled.
 - Declarer is selectable under Calculation: We (North) or Partner (South). The `contractDeclarer` form/file field is `N` or `S`; it becomes `calculation.targetContract.declarer` and the Walrus `PRIMARY SCORER: V<level><strain> BY <seat>` directive in the uploaded config. The fixed hand and restriction seats stay unchanged. Changing declarer participates in stale-results detection.

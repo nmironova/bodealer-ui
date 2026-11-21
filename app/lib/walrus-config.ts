@@ -246,13 +246,14 @@ function pushDescription(lines: string[], task: TaskConfigDto): void {
   const description = task.meta.description?.trim();
 
   lines.push("----------");
+  // Walrus enters the selected task only when a body line starts with the
+  // TASK NAME value. A description must never replace that section heading.
+  lines.push(task.meta.name);
 
   if (description) {
     for (const line of description.split(/\r?\n/)) {
       lines.push(line.trimEnd());
     }
-  } else {
-    lines.push(task.meta.name);
   }
 
   lines.push("");

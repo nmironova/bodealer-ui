@@ -1,0 +1,25 @@
+{
+  "format": "bodealer-board",
+  "version": 1,
+  "values": {
+    "name": "ABC123",
+    "description": "sadasdsa",
+    "hand": "109542 95 QJ10 AQ10",
+    "partner.hcpMin": "14",
+    "partner.hcpMax": "17",
+    "partner.spadesMin": "4",
+    "partner.spadesMax": "5",
+    "partner.heartsMin": "3",
+    "partner.heartsMax": "4",
+    "partner.diamondsMin": "0",
+    "partner.diamondsMax": "4",
+    "lho.noSixCardSuit": "true",
+    "rho.noSixCardSuit": "true",
+    "taskType": "ONE_SIDED_BIDDING_LEVEL",
+    "contractLevel": "4",
+    "contractStrain": "S",
+    "contractDeclarer": "S",
+    "boardsK": "10",
+    "postmortem": "AUTO"
+  }
+}
