@@ -46,6 +46,7 @@ export type HandShapeConstraints = {
 };
 
 export type PlayerRestrictions = {
+  noOvercall?: boolean;
   hcp?: RangeConstraint;
   suitLengths?: SuitLengthConstraints;
   suitPoints?: SuitPointConstraints;

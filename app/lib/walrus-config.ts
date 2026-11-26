@@ -284,15 +284,11 @@ export function buildWalrusConfig(task: TaskConfigDto): string {
   pushPlayerFilters(lines, rhoSeat, task.deal.restrictions?.rho);
   pushCombinations(lines, fixedSeat, task.deal.combinations);
 
-  if (!task.deal.restrictions?.lho || !task.deal.restrictions?.rho) {
-    lines.push("");
-  }
-
-  if (!task.deal.restrictions?.lho) {
+  if (task.deal.restrictions?.lho?.noOvercall) {
     lines.push(`    ${toFilterSeatName(lhoSeat)}: NoOvercall`);
   }
 
-  if (!task.deal.restrictions?.rho) {
+  if (task.deal.restrictions?.rho?.noOvercall) {
     lines.push(`    ${toFilterSeatName(rhoSeat)}: NoOvercall`);
   }
 
