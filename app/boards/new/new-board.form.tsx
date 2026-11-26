@@ -77,6 +77,9 @@ export default function NewBoardForm() {
   }
   const [handRevision, setHandRevision] = useState(0);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>(
+    {},
+  );
   const [activeTab, setActiveTab] = useState<"setup" | "results">("setup");
   const previewData = new FormData();
   for (const [key, value] of Object.entries({
@@ -202,6 +205,7 @@ export default function NewBoardForm() {
     try {
       const loadedValues = parseBoardFile(await file.text());
       setValues(loadedValues);
+      setTouchedFields({ name: true, hand: true });
       setHandRevision((revision) => revision + 1);
       setFileMessage({
         kind: "success",
@@ -223,7 +227,11 @@ export default function NewBoardForm() {
     lastRun && lastRun.configuration !== configurationSnapshot(values),
   );
   const errors = [
-    ...validationErrors,
+    ...Object.entries(prepared.errors).flatMap(([field, messages]) =>
+      (field === "name" || field === "hand") && !touchedFields[field]
+        ? []
+        : (messages ?? []),
+    ),
     ...submitErrors,
     ...(state?.message && !state.taskId
       ? [
@@ -309,6 +317,7 @@ export default function NewBoardForm() {
             type="button"
             onClick={() => {
               setValues({});
+              setTouchedFields({});
               setHandRevision((revision) => revision + 1);
               setFileMessage(undefined);
               setSubmitErrors([]);
@@ -407,6 +416,22 @@ export default function NewBoardForm() {
         action={formAction}
         noValidate
         onSubmit={beforeSubmit}
+        onBlur={(event) => {
+          const target = event.target;
+          if (target instanceof HTMLInputElement && target.name === "name") {
+            setTouchedFields((current) => ({ ...current, name: true }));
+          }
+          if (target instanceof HTMLElement) {
+            const handSection = target.closest(".hand-section");
+            if (
+              handSection &&
+              event.relatedTarget instanceof Node &&
+              !handSection.contains(event.relatedTarget)
+            ) {
+              setTouchedFields((current) => ({ ...current, hand: true }));
+            }
+          }
+        }}
         className={styles.layout}
       >
         <section

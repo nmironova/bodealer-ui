@@ -32,7 +32,7 @@ for (const width of [1536, 390]) {
       const summary = title.locator("..");
       const styles = await summary.evaluate((el) => ({
         background: getComputedStyle(el).backgroundColor,
-        colors: Array.from(el.children).map(
+        colors: Array.from(el.querySelectorAll("h3, p > span")).map(
           (child) => getComputedStyle(child).color,
         ),
       }));

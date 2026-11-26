@@ -854,3 +854,27 @@
 .workspace :global(.hand-section[data-collapsed="true"] .hand-layout) {
   grid-template-columns: minmax(0, 1fr);
 }
+
+.workspace :global(.hand-section[data-collapsed="true"]) {
+  align-self: start;
+  padding-block: 12px;
+}
+.workspace :global(.hand-section[data-collapsed="true"] .section-heading) {
+  margin-bottom: 10px;
+}
+.workspace :global(.hand-section[data-collapsed="true"] .hand-summary) {
+  padding: 4px 10px;
+}
+.workspace :global(.hand-section[data-collapsed="true"] .suit-summary-row) {
+  padding-block: 2px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.workspace :global(.hand-section[data-collapsed="true"] .suit-symbol) {
+  font-size: 18px;
+}
+@media (min-width: 1051px) {
+  .initial .sections:has(> :global(.hand-section[data-collapsed="true"])) {
+    grid-template-rows: min-content auto;
+  }
+}

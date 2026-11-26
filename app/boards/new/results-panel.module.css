@@ -1,3 +1,14 @@
 .summary {
   background: var(--surface-muted, rgb(248 250 252 / 70%));
 }
+
+.summaryDetails {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+}
+.taskId {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

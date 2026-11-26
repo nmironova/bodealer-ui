@@ -115,6 +115,8 @@ Supported statuses are running, completed, failed, and cancelled. The normalizer
 
 ## Setup behavior and compatibility
 
+Required-name and incomplete-hand messages are deferred until the user leaves the corresponding field/hand section. A fresh or cleared setup shows guidance and disabled Run buttons without an error banner. Explicitly loaded files validate immediately; View config still explains all invalid settings on request.
+
 Each opponent has an explicit No overcall checkbox (`lho.noOvercall` / `rho.noOvercall`). A checked flag emits `EAST: NoOvercall` / `WEST: NoOvercall` alongside any other restrictions. Flags persist in version-1 board files, participate in opponent swapping and dirty-state detection, and appear in compact summaries. No partner option is exposed. Unchecked/absent flags emit no NoOvercall line: the old implicit fallback for otherwise-unrestricted opponents has been removed, so legacy boards must explicitly enable this option if desired.
 
 Walrus config must repeat the selected `TASK NAME` as the task-body heading after the opening divider. Descriptions follow that heading; they must not replace it. Otherwise Walrus remains in its task-search state and reports “Task not found.” Regression coverage uses the reported ABC123 board with and without descriptions.

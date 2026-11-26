@@ -148,16 +148,22 @@ export default function ResultsPanel({
                     ? "Analysis cancelled"
                     : "Analysis status"}
         </h3>
-        <p className="mt-2 text-sm leading-6 text-slate-500">
-          {!taskId && !starting
-            ? "Set your hand, add restrictions, and run an analysis. Your results will stay here as you adjust the setup."
-            : "Original Walrus output. It updates while the analysis runs."}
+        <p
+          className={`${styles.summaryDetails} mt-2 text-sm leading-6 text-slate-500`}
+        >
+          <span>
+            {!taskId && !starting
+              ? "Set your hand, add restrictions, and run an analysis. Your results will stay here as you adjust the setup."
+              : "Original Walrus output. It updates while the analysis runs."}
+          </span>
+          {taskId && (
+            <span
+              className={`${styles.taskId} font-mono text-xs text-slate-400`}
+            >
+              Task {taskId}
+            </span>
+          )}
         </p>
-        {taskId && (
-          <p className="mt-3 break-all font-mono text-xs text-slate-400">
-            Task {taskId}
-          </p>
-        )}
       </div>
       {status?.status === "failed" && (
         <p role="alert" className="mb-3 text-sm text-red-700">
