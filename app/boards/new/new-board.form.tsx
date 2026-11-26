@@ -14,35 +14,32 @@ import {
   createBoardFile,
   parseBoardFile,
 } from "@/app/lib/board-config-file";
-import {
-  buildRestrictions,
-  validatePlayerRestrictions,
-  readCombinations,
-  validateCombinations,
-} from "@/app/lib/bodealer-form";
+import { prepareTask } from "@/app/lib/prepare-task";
+import ConfigPreview from "./config-preview";
 import {
   TASK_STATUS,
   type TaskStatus,
   type TaskStatusResponse,
 } from "@/app/lib/task-status";
-import HandPicker, { isCompleteHandText } from "@/app/ui/hand-picker";
+import HandPicker from "@/app/ui/hand-picker";
 import EditorSection, { FieldError } from "../../ui/editor-section";
 import RestrictionsPanel from "./restrictions-panel";
 import CalculationEditor, { calculationSummary } from "./calculation-editor";
 import ResultsPanel from "./results-panel";
 import styles from "./workbench.module.css";
 
+const CONFIG_DEFAULTS = {
+  taskType: "ONE_SIDED_BIDDING_LEVEL",
+  contractLevel: "4",
+  contractStrain: "S",
+  contractDeclarer: "S",
+  boardsK: "10",
+  postmortem: "AUTO",
+  hand: "- - - -",
+};
+
 function configurationSnapshot(values: Record<string, string>) {
-  const normalized = {
-    taskType: "ONE_SIDED_BIDDING_LEVEL",
-    contractLevel: "4",
-    contractStrain: "S",
-    contractDeclarer: "S",
-    boardsK: "10",
-    postmortem: "AUTO",
-    hand: "- - - -",
-    ...values,
-  };
+  const normalized = { ...CONFIG_DEFAULTS, ...values };
   return JSON.stringify(
     Object.entries(normalized)
       .filter(([, value]) => value !== "")
@@ -79,7 +76,19 @@ export default function NewBoardForm() {
   const [handRevision, setHandRevision] = useState(0);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [activeTab, setActiveTab] = useState<"setup" | "results">("setup");
-  const [clientErrors, setClientErrors] = useState<string[]>([]);
+  const previewData = new FormData();
+  for (const [key, value] of Object.entries({
+    ...CONFIG_DEFAULTS,
+    ...values,
+  })) {
+    previewData.set(key, value);
+  }
+  const prepared = prepareTask(previewData);
+  const validationErrors = Object.values(prepared.errors).flatMap(
+    (items) => items ?? [],
+  );
+  const configText = prepared.configText;
+  const [submitErrors, setSubmitErrors] = useState<string[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -131,12 +140,6 @@ export default function NewBoardForm() {
 
   function handleValueChange(name: string, value: string) {
     setValues((currentValues) => {
-      if (value === "") {
-        const nextValues = { ...currentValues };
-        delete nextValues[name];
-        return nextValues;
-      }
-
       return { ...currentValues, [name]: value };
     });
   }
@@ -217,7 +220,8 @@ export default function NewBoardForm() {
     lastRun && lastRun.configuration !== configurationSnapshot(values),
   );
   const errors = [
-    ...clientErrors,
+    ...validationErrors,
+    ...submitErrors,
     ...(state?.message && !state.taskId
       ? [
           state.message,
@@ -228,39 +232,17 @@ export default function NewBoardForm() {
 
   function beforeSubmit(event: FormEvent<HTMLFormElement>) {
     const formData = new FormData(event.currentTarget);
-    const restrictions = buildRestrictions(formData);
-    const errors = [
-      ...validatePlayerRestrictions(restrictions?.partner, "Partner"),
-      ...validatePlayerRestrictions(restrictions?.lho, "LHO"),
-      ...validatePlayerRestrictions(restrictions?.rho, "RHO"),
-      ...validateCombinations(readCombinations(formData)),
-    ];
-    if (!values.name?.trim()) errors.unshift("Name is required.");
-    else if (values.name.trim().length > 100)
-      errors.push("Name must be at most 100 characters.");
-    if ((values.description ?? "").length > 1000)
-      errors.push("Description must be at most 1000 characters.");
-    if (!isCompleteHandText(String(formData.get("hand") ?? "")))
-      errors.push("Your hand must contain exactly 13 valid, distinct cards.");
-    const boards = Number(formData.get("boardsK"));
-    if (!Number.isInteger(boards) || boards < 1 || boards > 200)
-      errors.push("Boards must be a whole number between 1 and 200 thousands.");
-    if (
-      Object.entries(values).some(
-        ([key, value]) =>
-          /(?:Min|Max)$/.test(key) &&
-          value !== "" &&
-          !Number.isInteger(Number(value)),
-      )
-    )
-      errors.push("Restriction ranges must use whole numbers.");
+    const submission = prepareTask(formData);
+    const errors = Object.values(submission.errors).flatMap(
+      (items) => items ?? [],
+    );
     if (errors.length) {
       event.preventDefault();
-      setClientErrors(errors);
+      setSubmitErrors(errors);
       setActiveTab("setup");
       return;
     }
-    setClientErrors([]);
+    setSubmitErrors([]);
     setSubmittedConfiguration(configurationSnapshot(values));
     setFileMessage(undefined);
     setHasSubmitted(true);
@@ -296,6 +278,11 @@ export default function NewBoardForm() {
               if (file) void loadBoardFile(file);
             }}
           />
+          <ConfigPreview
+            configText={configText}
+            fileName={prepared.fileName}
+            errors={validationErrors}
+          />
           <button type="button" onClick={() => fileInputRef.current?.click()}>
             Load
           </button>
@@ -308,7 +295,7 @@ export default function NewBoardForm() {
               setValues({});
               setHandRevision((revision) => revision + 1);
               setFileMessage(undefined);
-              setClientErrors([]);
+              setSubmitErrors([]);
               if (fileInputRef.current) fileInputRef.current.value = "";
             }}
           >
@@ -500,7 +487,7 @@ export default function NewBoardForm() {
             )}
             <button
               type="submit"
-              disabled={pending || isTaskRunning || isCancelling}
+              disabled={pending || isTaskRunning || isCancelling || !configText}
               className={styles.runButton}
             >
               {pending ? "Starting…" : compact ? "Run again" : "Run analysis"}

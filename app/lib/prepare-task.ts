@@ -67,7 +67,7 @@ export function prepareTask(formData: FormData) {
   if (!hand) {
     errors.hand = ["Hand is required."];
   } else if (countCardsFromHandText(hand) !== 13) {
-    errors.hand = ["Hand must contain exactly 13 cards."];
+    errors.hand = ["Your hand must contain exactly 13 valid, distinct cards."];
   }
 
   if (boardsK == null) {
@@ -91,6 +91,21 @@ export function prepareTask(formData: FormData) {
       ...(errors.general ?? []),
       "Postmortem setting is invalid.",
     ];
+  }
+
+  for (const [key, value] of Object.entries(values)) {
+    if (
+      (key === "boardsK" ||
+        key === "contractLevel" ||
+        /(?:Min|Max)$/.test(key)) &&
+      value !== "" &&
+      !Number.isInteger(Number(value))
+    ) {
+      errors.general = [
+        ...(errors.general ?? []),
+        `${key} must be a whole number.`,
+      ];
+    }
   }
 
   const restrictions = buildRestrictions(formData);

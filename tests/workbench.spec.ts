@@ -30,7 +30,9 @@ test("initial hand stays vertical and invalid ranges/incomplete hands block exec
     spades.getByRole("button", { name: "Spades 10", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await spades.getByRole("button", { name: "Spades 10", exact: true }).click();
-  await page.getByRole("button", { name: "Run analysis", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Run analysis", exact: true }),
+  ).toBeDisabled();
   await expect(
     page.getByRole("alert").filter({ hasText: "exactly 13 valid" }),
   ).toBeVisible();
@@ -40,7 +42,9 @@ test("initial hand stays vertical and invalid ranges/incomplete hands block exec
   await expect(
     page.getByText("Minimum must not exceed maximum."),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Run analysis", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Run analysis", exact: true }),
+  ).toBeDisabled();
   await expect(
     page.getByRole("alert").filter({ hasText: "cannot be greater" }),
   ).toBeVisible();

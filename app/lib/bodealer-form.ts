@@ -98,24 +98,19 @@ export function countCardsFromHandText(hand: string): number {
   const suits = hand.trim().split(/\s+/);
   if (suits.length !== 4) return 0;
 
-  return suits.reduce((sum, suitText) => {
-    if (suitText === "-") return sum;
-
-    let i = 0;
-    let count = 0;
-
-    while (i < suitText.length) {
-      if (suitText.startsWith("10", i)) {
-        count += 1;
-        i += 2;
-      } else {
-        count += 1;
-        i += 1;
-      }
-    }
-
-    return sum + count;
-  }, 0);
+  let count = 0;
+  for (const suit of suits) {
+    if (suit === "-") continue;
+    const ranks = suit.toUpperCase().match(/10|[AKQJ2-9]/g);
+    if (
+      !ranks ||
+      ranks.join("") !== suit.toUpperCase() ||
+      new Set(ranks).size !== ranks.length
+    )
+      return 0;
+    count += ranks.length;
+  }
+  return count;
 }
 
 export function validatePlayerRestrictions(

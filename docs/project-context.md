@@ -79,6 +79,12 @@ The shared-password beta is implemented without accounts, a database, or OAuth. 
 - Local login/submission counters are bounded, per-process safeguards only. Production-wide limits must be configured in Vercel Firewall as documented in README; no external infrastructure has been provisioned.
 - Synthetic credentials in `tests/fixtures/test-env.mjs` are test-only values. The test harness uses a fake backend, never the VPS.
 
+## Live upload preview
+
+View config beside Load/Save/Clear opens a read-only Walrus text drawer (nonmodal desktop, full-screen modal mobile). The backend accepts multipart `configFile`, not JSON; the agreed preview shows its exact text, with Copy config and Download .txt. It does not expose credentials or replace version-1 board Save/Load files.
+
+The preview derives from current configuration values and existing calculation defaults through the pure `prepareTask` function, also used by the server action and client submission guard. Validation errors replace the preview and disable Run/Copy/Download. Whole-number and valid/distinct-card checks now live in shared validation, so server submission also rejects values that previously only the browser rejected. Empty settings remain empty rather than reverting to defaults during edits. Browser tests compare copied/downloaded text byte-for-byte with the parsed multipart upload on desktop/mobile and cover live configuration updates.
+
 ## Configuration and data flow
 
 1. A signed session is required. The client form stores string field values and submits with React `useActionState`.
