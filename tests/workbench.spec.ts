@@ -73,6 +73,19 @@ test("workbench editing preserves output, closed-drawer values save, and rerun u
   const setup = await page.locator(".analysis-setup").boundingBox();
   const results = await page.locator(".results-panel").boundingBox();
   expect(results!.x).toBeGreaterThan(setup!.x + setup!.width);
+  expect(results!.width).toBeGreaterThan(setup!.width);
+  const handSummaryBox = (await page.locator(".hand-section").boundingBox())!;
+  const calculationSummaryBox = (await page
+    .locator(".calculation-section")
+    .boundingBox())!;
+  expect(handSummaryBox.width).toBeGreaterThan(setup!.width - 40);
+  expect(calculationSummaryBox.width).toBeGreaterThan(setup!.width - 40);
+  expect(calculationSummaryBox.y).toBeGreaterThanOrEqual(
+    handSummaryBox.y + handSummaryBox.height,
+  );
+  await expect(
+    page.getByRole("heading", { name: "Analysis configuration", exact: true }),
+  ).not.toBeVisible();
   await page.screenshot({
     path: "artifacts/workbench/desktop-workbench.png",
     fullPage: true,

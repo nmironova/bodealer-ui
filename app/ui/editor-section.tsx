@@ -24,6 +24,9 @@ type Props = {
   ) => ReactNode;
   keepSummaryInline?: boolean;
   collapseOnLeave?: boolean;
+  collapsible?: boolean;
+  initiallyCollapsed?: boolean;
+  hideLabel?: string;
   children: ReactNode;
 };
 
@@ -36,23 +39,43 @@ export default function EditorSection({
   summary,
   keepSummaryInline = false,
   collapseOnLeave = false,
+  collapsible = false,
+  initiallyCollapsed = false,
+  hideLabel = "Hide editor",
   children,
 }: Props) {
   const section = useRef<HTMLElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
-  const [collapsed, setCollapsed] = useState(false);
-  const inlineCollapsed = !compact && collapseOnLeave && collapsed;
+  const pointerDown = useRef(false);
+  const [collapsed, setCollapsed] = useState(initiallyCollapsed);
+  const inlineCollapsed =
+    !compact && (collapsible || collapseOnLeave) && collapsed;
   useEffect(() => {
     if (compact || !collapseOnLeave) return;
-    function leave(event: PointerEvent) {
+    function startPointer() {
+      pointerDown.current = true;
+    }
+    function endPointer() {
+      pointerDown.current = false;
+    }
+    function leave(event: MouseEvent) {
       if (
         event.target instanceof Node &&
         !section.current?.contains(event.target)
       )
         setCollapsed(true);
     }
-    document.addEventListener("pointerdown", leave);
-    return () => document.removeEventListener("pointerdown", leave);
+    document.addEventListener("pointerdown", startPointer, true);
+    document.addEventListener("pointerup", endPointer, true);
+    document.addEventListener("pointercancel", endPointer, true);
+    document.addEventListener("click", leave);
+    return () => {
+      document.removeEventListener("pointerdown", startPointer, true);
+      document.removeEventListener("pointerup", endPointer, true);
+      document.removeEventListener("pointercancel", endPointer, true);
+      document.removeEventListener("click", leave);
+      pointerDown.current = false;
+    };
   }, [compact, collapseOnLeave]);
   const id = useId();
   const titleId = useId();
@@ -73,7 +96,9 @@ export default function EditorSection({
       setCollapsed(false);
       element.open = true;
       element
-        .querySelector<HTMLInputElement>("input:not([type=hidden])")
+        .querySelector<HTMLElement>(
+          "input:not([type=hidden]), select, textarea",
+        )
         ?.focus();
     }
   }
@@ -81,12 +106,13 @@ export default function EditorSection({
     <section
       ref={section}
       className={`work-section ${className}`}
-      data-collapsed={inlineCollapsed}
+      data-collapsed={compact ? !expanded : inlineCollapsed}
       aria-labelledby={titleId}
       onBlur={(event) => {
         if (
           !compact &&
           collapseOnLeave &&
+          !pointerDown.current &&
           event.relatedTarget instanceof Node &&
           !event.currentTarget.contains(event.relatedTarget)
         )
@@ -97,7 +123,7 @@ export default function EditorSection({
         <h2 id={titleId}>{title}</h2>
         <div className="section-heading-actions">
           {badge}
-          {(compact || collapseOnLeave) && (
+          {(compact || collapsible || collapseOnLeave) && (
             <button
               type="button"
               className="edit-action"
@@ -108,13 +134,17 @@ export default function EditorSection({
               aria-controls={id}
               aria-expanded={compact ? expanded : !inlineCollapsed}
             >
-              {!compact && !inlineCollapsed ? "Hide cards" : editLabel}
+              {!compact && !inlineCollapsed ? hideLabel : editLabel}
             </button>
           )}
         </div>
       </header>
-      <div className={keepSummaryInline ? "hand-layout" : undefined}>
-        {(compact || keepSummaryInline) &&
+      <div
+        className={
+          keepSummaryInline ? "hand-layout hand-editor-content" : undefined
+        }
+      >
+        {(compact || inlineCollapsed || keepSummaryInline) &&
           summary?.(open, compact ? expanded : !inlineCollapsed, id)}
         <dialog
           ref={dialog}

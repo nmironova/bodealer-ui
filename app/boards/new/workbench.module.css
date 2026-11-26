@@ -113,18 +113,6 @@
   gap: 16px;
   align-items: stretch;
 }
-.sections > :global(.hand-section) {
-  grid-column: 1;
-  grid-row: 1;
-}
-.sections > :global(.restrictions-section) {
-  grid-column: 2;
-  grid-row: 1 / 3;
-}
-.sections > :global(.calculation-section) {
-  grid-column: 1;
-  grid-row: 2;
-}
 .workspace :global(.work-section) {
   min-width: 0;
   padding: 16px;
@@ -638,9 +626,6 @@
   display: none;
 }
 @media (max-width: 1280px) {
-  .initial :global(.hand-layout) {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .initial :global(.hand-summary) {
     max-width: 330px;
   }
@@ -661,9 +646,6 @@
   .sections > :global(.restrictions-section) {
     order: 1;
   }
-  .initial :global(.hand-layout) {
-    grid-template-columns: 160px minmax(0, 1fr);
-  }
   .workbench .layout {
     grid-template-columns: minmax(320px, 40fr) minmax(0, 60fr);
   }
@@ -682,9 +664,6 @@
     font-size: 12px;
   }
   .metadata {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .initial :global(.hand-layout) {
     grid-template-columns: minmax(0, 1fr);
   }
   .initial :global(.hand-summary) {
@@ -851,30 +830,185 @@
   }
 }
 
-.workspace :global(.hand-section[data-collapsed="true"] .hand-layout) {
-  grid-template-columns: minmax(0, 1fr);
+/* One surface for hand and calculation; restrictions retain their own panel. */
+.setup {
+  container: analysis-setup / inline-size;
 }
-
-.workspace :global(.hand-section[data-collapsed="true"]) {
+.configuration {
   align-self: start;
-  padding-block: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  align-items: start;
+  gap: 16px 24px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border, #dce4ef);
+  border-radius: 11px;
+  background: var(--surface, #fff);
 }
-.workspace :global(.hand-section[data-collapsed="true"] .section-heading) {
+.configurationHeading {
+  grid-column: 1 / -1;
+}
+.configurationHeading h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+.workspace .configuration > :global(.work-section) {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  align-self: start;
+}
+.configuration :global(.section-heading) {
+  flex-wrap: wrap;
   margin-bottom: 10px;
 }
-.workspace :global(.hand-section[data-collapsed="true"] .hand-summary) {
-  padding: 4px 10px;
+.configuration :global(.section-heading h2) {
+  font-size: 14px;
 }
-.workspace :global(.hand-section[data-collapsed="true"] .suit-summary-row) {
-  padding-block: 2px;
-  font-size: 15px;
+.configuration :global(.section-heading-actions) {
+  flex-wrap: wrap;
+}
+.configuration :global(.hand-section[data-collapsed="true"] .hand-layout) {
+  display: block;
+}
+.configuration :global(.hand-section[data-collapsed="true"] .hand-summary) {
+  width: auto;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.configuration :global(.hand-section[data-collapsed="true"] .suit-summary-row) {
+  padding: 2px 0;
+  border: 0;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 8px;
+  font-size: 16px;
   line-height: 1.4;
 }
-.workspace :global(.hand-section[data-collapsed="true"] .suit-symbol) {
-  font-size: 18px;
+.configuration :global(.hand-section[data-collapsed="true"] .suit-symbol) {
+  font-size: 19px;
 }
-@media (min-width: 1051px) {
-  .initial .sections:has(> :global(.hand-section[data-collapsed="true"])) {
-    grid-template-rows: min-content auto;
+.configuration :global(.calculation-summary) {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 8px;
+}
+.configuration :global(.calculation-summary strong) {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 30px;
+}
+.configuration :global(.calculation-summary > span) {
+  font-size: 13px;
+}
+@container analysis-setup (min-width: 460px) {
+  .configuration {
+    grid-template-columns: fit-content(240px) minmax(0, 1fr);
+  }
+}
+.initial .configuration:has(> :global(.work-section[data-collapsed="false"])) {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (max-width: 760px) {
+  .configuration {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 14px;
+  }
+}
+
+/* Expanded setup and the results workbench use independent section surfaces.
+   Only the initial, fully collapsed summaries share one compact surface. */
+.initial .configuration:has(> :global(.work-section[data-collapsed="false"])),
+.workbench .configuration {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.initial
+  .configuration:has(> :global(.work-section[data-collapsed="false"]))
+  > .configurationHeading,
+.workbench .configurationHeading {
+  display: none;
+}
+.initial
+  .configuration:has(> :global(.work-section[data-collapsed="false"]))
+  > :global(.work-section),
+.workbench .configuration > :global(.work-section) {
+  padding: 16px;
+  border: 1px solid var(--border, #dce4ef);
+  border-radius: 11px;
+  background: var(--surface, #fff);
+}
+.initial
+  .configuration
+  :global(.hand-section[data-collapsed="false"] .hand-summary) {
+  max-width: 330px;
+}
+.workbench .configuration {
+  align-self: stretch;
+  gap: 12px;
+}
+.workbench .configuration :global(.calculation-summary) {
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+@media (max-width: 760px) {
+  .initial
+    .configuration:has(> :global(.work-section[data-collapsed="false"]))
+    > :global(.work-section),
+  .workbench .configuration > :global(.work-section) {
+    padding: 14px;
+  }
+}
+
+/* Match main's card-entry layout without affecting closed/workbench views. */
+.initial :global(.hand-section[data-collapsed="false"] .hand-editor-content) {
+  display: grid;
+  grid-template-columns: 155px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.initial
+  :global(
+    .hand-section[data-collapsed="false"] .hand-editor-content > .hand-summary
+  ) {
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+}
+.initial
+  :global(
+    .hand-section[data-collapsed="false"] .hand-editor-content > .editor-inline
+  ) {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  width: 100%;
+}
+@media (max-width: 760px) {
+  .initial :global(.hand-section[data-collapsed="false"] .hand-editor-content) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .initial
+    :global(
+      .hand-section[data-collapsed="false"]
+        .hand-editor-content
+        > .editor-inline
+    ) {
+    grid-column: 1;
+    grid-row: 2;
   }
 }

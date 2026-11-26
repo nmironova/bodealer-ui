@@ -474,12 +474,61 @@ export default function NewBoardForm() {
             </div>
           </div>
           <div className={styles.sections}>
-            <HandPicker
-              key={handRevision}
-              compact={compact}
-              defaultHandText={values.hand}
-              onHandChange={(hand) => handleValueChange("hand", hand)}
-            />
+            <section
+              className={styles.configuration}
+              aria-label="Analysis configuration"
+            >
+              <header className={styles.configurationHeading}>
+                <h2>Analysis configuration</h2>
+              </header>
+              <HandPicker
+                key={handRevision}
+                compact={compact}
+                defaultHandText={values.hand}
+                onHandChange={(hand) => handleValueChange("hand", hand)}
+              />
+              <EditorSection
+                title="Calculation"
+                compact={compact}
+                collapsible
+                initiallyCollapsed
+                hideLabel="Hide calculation"
+                editLabel="Edit calculation"
+                className="calculation-section"
+                summary={(open) => (
+                  <button
+                    type="button"
+                    onClick={open}
+                    className="calculation-summary"
+                    aria-label="Edit calculation settings"
+                  >
+                    <strong>
+                      <SuitText>
+                        {calculationSummary(values).split(" · ")[0]}
+                      </SuitText>
+                    </strong>
+                    <span>
+                      {calculationSummary(values)
+                        .split(" · ")
+                        .slice(1)
+                        .join(" · ")}
+                      <small>
+                        {(values.taskType ?? "ONE_SIDED_BIDDING_LEVEL") ===
+                        "SEEK_OPENING_LEAD"
+                          ? "Seek opening lead"
+                          : "One-sided bidding level"}
+                      </small>
+                    </span>
+                  </button>
+                )}
+              >
+                <CalculationEditor
+                  values={values}
+                  onValueChange={handleValueChange}
+                  errors={state?.errors}
+                />
+              </EditorSection>
+            </section>
             <RestrictionsPanel
               compact={compact}
               values={values}
@@ -488,44 +537,6 @@ export default function NewBoardForm() {
               onSwap={swapOpponentRestrictions}
               errors={state?.errors?.general}
             />
-            <EditorSection
-              title="Calculation"
-              compact={compact}
-              editLabel="Edit calculation"
-              className="calculation-section"
-              summary={(open) => (
-                <button
-                  type="button"
-                  onClick={open}
-                  className="calculation-summary"
-                  aria-label="Edit calculation settings"
-                >
-                  <strong>
-                    <SuitText>
-                      {calculationSummary(values).split(" · ")[0]}
-                    </SuitText>
-                  </strong>
-                  <span>
-                    {calculationSummary(values)
-                      .split(" · ")
-                      .slice(1)
-                      .join(" · ")}
-                    <small>
-                      {(values.taskType ?? "ONE_SIDED_BIDDING_LEVEL") ===
-                      "SEEK_OPENING_LEAD"
-                        ? "Seek opening lead"
-                        : "One-sided bidding level"}
-                    </small>
-                  </span>
-                </button>
-              )}
-            >
-              <CalculationEditor
-                values={values}
-                onValueChange={handleValueChange}
-                errors={state?.errors}
-              />
-            </EditorSection>
           </div>
           <div className={styles.runBar}>
             {compact && stale && (

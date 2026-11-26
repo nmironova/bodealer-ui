@@ -69,7 +69,7 @@ test("desktop initial setup shows hand, restrictions, calculation and the run ac
     page.getByRole("heading", { name: "Analysis setup", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "North · Your hand" }),
+    page.getByRole("heading", { name: "North", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Restrictions", exact: true }),
@@ -86,6 +86,9 @@ test("declarer selection survives save/load and Clear restores Partner", async (
   page,
 }) => {
   await page.goto(pageUrl);
+  await page
+    .getByRole("button", { name: "Edit calculation", exact: true })
+    .click();
   const declarer = page.getByLabel("Declarer", { exact: true });
   await expect(declarer).toHaveValue("S");
   await declarer.selectOption("N");

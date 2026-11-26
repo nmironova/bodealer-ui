@@ -228,3 +228,10 @@ body {
     background-color: #293b54;
   }
 }
+
+.suit-symbol,
+.suit-black,
+.suit-red {
+  font-family: Georgia, "Times New Roman", serif;
+  font-variant-emoji: text;
+}

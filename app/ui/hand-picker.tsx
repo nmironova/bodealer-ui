@@ -187,11 +187,12 @@ export default function HandPicker({
 
   return (
     <EditorSection
-      title="North · Your hand"
+      title="North"
       compact={compact}
       editLabel="Edit hand"
       className="hand-section"
       collapseOnLeave={isCompleteHandText(handTextInput)}
+      hideLabel="Hide cards"
       keepSummaryInline
       badge={
         <span
