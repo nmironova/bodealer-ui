@@ -37,10 +37,10 @@ const STRAIN_LABELS: Record<(typeof CONTRACT_STRAINS)[number], string> = {
 };
 
 const STRAIN_COLORS: Record<(typeof CONTRACT_STRAINS)[number], string> = {
-  S: "text-gray-950",
-  H: "text-red-600",
-  D: "text-red-600",
-  C: "text-gray-950",
+  S: "suit-black",
+  H: "suit-red",
+  D: "suit-red",
+  C: "suit-black",
   NT: "text-blue-700",
 };
 

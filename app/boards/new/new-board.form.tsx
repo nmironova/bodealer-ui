@@ -21,6 +21,7 @@ import {
   type TaskStatus,
   type TaskStatusResponse,
 } from "@/app/lib/task-status";
+import SuitText from "@/app/ui/suit-text";
 import HandPicker from "@/app/ui/hand-picker";
 import EditorSection, { FieldError } from "../../ui/editor-section";
 import RestrictionsPanel from "./restrictions-panel";
@@ -458,7 +459,11 @@ export default function NewBoardForm() {
                   className="calculation-summary"
                   aria-label="Edit calculation settings"
                 >
-                  <strong>{calculationSummary(values).split(" · ")[0]}</strong>
+                  <strong>
+                    <SuitText>
+                      {calculationSummary(values).split(" · ")[0]}
+                    </SuitText>
+                  </strong>
                   <span>
                     {calculationSummary(values)
                       .split(" · ")

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { currentSession } from "../lib/auth/request";
+import ThemeSelector from "../ui/theme-selector";
 import LoginForm from "./login-form";
 import styles from "./login.module.css";
 
@@ -54,6 +55,9 @@ export default async function LoginPage() {
             Sign in is not configured. Contact the beta administrator.
           </p>
         )}
+        <div className={styles.themeControl}>
+          <ThemeSelector />
+        </div>
       </section>
     </main>
   );

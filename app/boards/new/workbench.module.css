@@ -1,5 +1,5 @@
 .workspace {
-  color: #142039;
+  color: var(--text, #142039);
   font-size: 14px;
 }
 .toolbar {
@@ -19,7 +19,7 @@
 }
 .toolbar p {
   margin: 6px 0 0;
-  color: #63728b;
+  color: var(--muted, #63728b);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -37,21 +37,21 @@
   gap: 8px;
   min-height: 32px;
   padding: 5px 12px;
-  border: 1px solid #d8e1ed;
+  border: 1px solid var(--border, #d8e1ed);
   border-radius: 7px;
-  background: #fff;
-  color: #253653;
+  background: var(--surface, #fff);
+  color: var(--text, #253653);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
 }
 .fileActions button:hover,
 .workspace :global(.edit-action):hover {
-  border-color: #a8bfe2;
-  background: #f4f8ff;
+  border-color: var(--border, #a8bfe2);
+  background: var(--accent-bg, #f4f8ff);
 }
 .workspace :is(button, input, select, textarea, summary):focus-visible {
-  outline: 2px solid #2876ed;
+  outline: 2px solid var(--focus, #2876ed);
   outline-offset: 3px;
 }
 .workspace button:disabled {
@@ -81,14 +81,14 @@
 .metadata label {
   display: block;
   margin-bottom: 6px;
-  color: #43526b;
+  color: var(--text, #43526b);
   font-size: 12px;
   font-weight: 500;
 }
 .metadata label span {
   margin-left: 6px;
   font-weight: 400;
-  color: #8994a6;
+  color: var(--muted, #8994a6);
 }
 .metadata input,
 .metadata textarea {
@@ -97,10 +97,10 @@
   min-height: 36px;
   width: 100%;
   padding: 8px 10px;
-  border: 1px solid #d6dfec;
+  border: 1px solid var(--border, #d6dfec);
   border-radius: 7px;
-  background: #fff;
-  color: #142039;
+  background: var(--surface, #fff);
+  color: var(--text, #142039);
   font-size: 13px;
   line-height: 18px;
 }
@@ -128,9 +128,9 @@
 .workspace :global(.work-section) {
   min-width: 0;
   padding: 16px;
-  border: 1px solid #dce4ef;
+  border: 1px solid var(--border, #dce4ef);
   border-radius: 11px;
-  background: #fff;
+  background: var(--surface, #fff);
 }
 .workspace :global(.section-heading) {
   display: flex;
@@ -153,15 +153,15 @@
 }
 .workspace :global(.hand-count) {
   border-radius: 999px;
-  background: #f0f3f8;
-  color: #68778c;
+  background: var(--surface-muted, #f0f3f8);
+  color: var(--muted, #68778c);
   padding: 4px 8px;
   font-size: 11px;
   white-space: nowrap;
 }
 .workspace :global(.hand-count.complete) {
-  background: #e9f9ee;
-  color: #168244;
+  background: var(--success-bg, #e9f9ee);
+  color: var(--success, #168244);
 }
 .workspace :global(.hand-layout) {
   display: grid;
@@ -173,14 +173,14 @@
   display: block;
   width: 100%;
   padding: 7px 10px;
-  border: 1px solid #e0e7f1;
+  border: 1px solid var(--border, #e0e7f1);
   border-radius: 8px;
-  background: #f7f9fd;
+  background: var(--surface-muted, #f7f9fd);
   text-align: left;
   cursor: pointer;
 }
 .workspace :global(.hand-summary:hover) {
-  border-color: #acc5ed;
+  border-color: var(--border, #acc5ed);
 }
 .workspace :global(.suit-summary-row) {
   display: grid;
@@ -188,7 +188,7 @@
   align-items: start;
   gap: 9px;
   padding: 6px 0;
-  border-bottom: 1px solid #e0e6f0;
+  border-bottom: 1px solid var(--border, #e0e6f0);
   font-size: 17px;
   line-height: 1.5;
 }
@@ -201,7 +201,7 @@
   line-height: 1.3;
 }
 .workspace :global(.section-editor) {
-  color: #142039;
+  color: var(--text, #142039);
 }
 .workspace :global(.editor-inline) {
   position: static;
@@ -242,17 +242,17 @@
   height: 32px;
   min-width: 0;
   padding: 0;
-  border: 1px solid #d7dfeb;
+  border: 1px solid var(--border, #d7dfeb);
   border-radius: 5px;
-  background: #fff;
-  color: #263653;
+  background: var(--surface, #fff);
+  color: var(--text, #263653);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
 }
 .workspace :global(.rank-card:hover:enabled) {
-  border-color: #6e9be1;
-  background: #eff5ff;
+  border-color: var(--border, #6e9be1);
+  background: var(--accent-bg, #eff5ff);
 }
 .workspace :global(.rank-card.selected),
 .workspace :global(.rank-card.selected:hover) {
@@ -266,12 +266,12 @@
 .workspace :global(.hand-text-editor label) {
   display: block;
   font-size: 12px;
-  color: #52627d;
+  color: var(--muted, #52627d);
 }
 .workspace :global(.hand-text-editor label span) {
   margin-left: 8px;
   letter-spacing: 5px;
-  color: #7c899b;
+  color: var(--muted, #7c899b);
 }
 .workspace :global(.hand-text-editor > div) {
   display: flex;
@@ -279,10 +279,12 @@
   margin-top: 7px;
 }
 .workspace :global(.hand-text-editor input) {
+  background: var(--surface, #fff);
+  color: var(--text, #142039);
   min-width: 0;
   width: 100%;
   padding: 6px 8px;
-  border: 1px solid #d7dfeb;
+  border: 1px solid var(--border, #d7dfeb);
   border-radius: 6px;
   font-family: var(--font-geist-mono), monospace;
   font-size: 12px;
@@ -292,14 +294,14 @@
 }
 .workspace :global(.field-hint) {
   margin-top: 6px;
-  color: #7c889a;
+  color: var(--muted, #7c889a);
   font-size: 11px;
   line-height: 1.5;
 }
 .workspace :global(.field-error),
 .workspace :global(.range-error) {
   margin-top: 6px;
-  color: #b83243;
+  color: var(--danger, #b83243);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -311,12 +313,12 @@
   margin-bottom: 10px;
 }
 .workspace :global(.restriction-toolbar p) {
-  color: #7a879a;
+  color: var(--muted, #7a879a);
   font-size: 11px;
 }
 .workspace :global(.text-action) {
   padding: 4px 0;
-  color: #0c5fe4;
+  color: var(--link, #0c5fe4);
   font-size: 12px;
   cursor: pointer;
 }
@@ -326,8 +328,8 @@
 }
 .workspace :global(.restriction-row) {
   min-width: 0;
-  border-color: #e2e8f1;
-  background: #fafbfe;
+  border-color: var(--border, #e2e8f1);
+  background: var(--surface-muted, #fafbfe);
 }
 .workspace :global(.restriction-row > summary) {
   padding: 10px;
@@ -357,7 +359,7 @@
   font-size: 12px;
 }
 .workspace :global(.range-row input[aria-invalid="true"]) {
-  border-color: #db7e8d;
+  border-color: var(--danger, #db7e8d);
 }
 .workspace :global(.range-error) {
   grid-column: 1 / -1;
@@ -368,7 +370,7 @@
 }
 .workspace :global(.advanced-editor > summary) {
   cursor: pointer;
-  color: #52627d;
+  color: var(--muted, #52627d);
   font-size: 12px;
 }
 .workspace :global(.restriction-summary) {
@@ -385,12 +387,12 @@
   font-size: 12px;
 }
 .workspace :global(.restriction-summary > span) {
-  color: #52627d;
+  color: var(--muted, #52627d);
   font-size: 12px;
   line-height: 1.7;
 }
 .workspace :global(.restriction-summary:hover > span) {
-  color: #075fe9;
+  color: var(--link, #075fe9);
 }
 .workspace :global(.summary-arrow) {
   justify-self: end;
@@ -398,7 +400,7 @@
 .workspace :global(.combination-count) {
   display: block;
   margin-top: 6px;
-  color: #73809a;
+  color: var(--muted, #73809a);
   font-size: 11px;
 }
 .workspace :global(.calculation-fields) {
@@ -449,22 +451,22 @@
 }
 .workspace :global(.calculation-summary strong) {
   padding: 8px 14px;
-  border: 1px solid #e1e7f1;
+  border: 1px solid var(--border, #e1e7f1);
   border-radius: 7px;
-  background: #f7f9fc;
+  background: var(--surface-muted, #f7f9fc);
   font-size: 26px;
   line-height: 1.2;
   white-space: nowrap;
 }
 .workspace :global(.calculation-summary > span) {
   font-size: 12px;
-  color: #52627d;
+  color: var(--muted, #52627d);
   line-height: 1.8;
 }
 .workspace :global(.calculation-summary small) {
   display: block;
   font-size: 11px;
-  color: #7c889a;
+  color: var(--muted, #7c889a);
 }
 .runBar {
   margin-top: 18px;
@@ -498,7 +500,7 @@
 }
 .runHint {
   margin: 0;
-  color: #8090a7;
+  color: var(--muted, #8090a7);
   font-size: 12px;
 }
 .results {
@@ -509,9 +511,9 @@
 }
 .workbench .setup {
   padding: 16px;
-  border: 1px solid #dce4ef;
+  border: 1px solid var(--border, #dce4ef);
   border-radius: 12px;
-  background: #fafbfd;
+  background: var(--surface-muted, #fafbfd);
 }
 .workbench .metadata {
   grid-template-columns: minmax(0, 1fr);
@@ -548,16 +550,16 @@
 }
 .modified {
   margin: 0 0 9px;
-  color: #a16b11;
+  color: var(--warning, #a16b11);
   font-size: 12px;
 }
 .validation {
   margin-bottom: 16px;
   padding: 12px 16px;
-  border: 1px solid #f0d4aa;
+  border: 1px solid var(--border, #f0d4aa);
   border-radius: 8px;
-  background: #fffaf2;
-  color: #9d5c1a;
+  background: var(--warning-bg, #fffaf2);
+  color: var(--warning, #9d5c1a);
   font-size: 13px;
   line-height: 1.7;
 }
@@ -567,7 +569,7 @@
 }
 .fileMessage {
   margin: -8px 0 14px;
-  color: #338258;
+  color: var(--success, #338258);
   font-size: 12px;
 }
 .workspace :global(.editor-drawer) {
@@ -580,9 +582,9 @@
   margin: 0;
   padding: 24px;
   border: 0;
-  border-left: 1px solid #d9e2ee;
+  border-left: 1px solid var(--border, #d9e2ee);
   border-radius: 14px 0 0 14px;
-  background: #fff;
+  background: var(--surface, #fff);
   overflow: auto;
 }
 .workspace :global(.editor-drawer)::backdrop {
@@ -595,7 +597,7 @@
   gap: 16px;
   padding-bottom: 20px;
   margin-bottom: 20px;
-  border-bottom: 1px solid #e3e9f2;
+  border-bottom: 1px solid var(--border, #e3e9f2);
 }
 .workspace :global(.drawer-heading h2) {
   margin: 4px 0 0;
@@ -603,7 +605,7 @@
   font-weight: 600;
 }
 .workspace :global(.drawer-heading > div > span) {
-  color: #8a96a8;
+  color: var(--muted, #8a96a8);
   font-size: 12px;
 }
 .workspace :global(.editor-drawer .editor-fields) {
@@ -619,9 +621,9 @@
 .workspace :global(.results-panel) {
   min-width: 0;
   padding: 18px;
-  border: 1px solid #dce4ef;
+  border: 1px solid var(--border, #dce4ef);
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface, #fff);
 }
 .workspace :global(.results-panel .walrus-console) {
   height: 410px;
@@ -738,16 +740,16 @@
     display: flex;
     margin-bottom: 16px;
     padding: 4px;
-    border: 1px solid #d7e1ee;
+    border: 1px solid var(--border, #d7e1ee);
     border-radius: 10px;
-    background: #fff;
+    background: var(--surface, #fff);
   }
   .mobileTabs button {
     flex: 1;
     min-height: 42px;
     padding: 8px 16px;
     border-radius: 7px;
-    color: #65758c;
+    color: var(--muted, #65758c);
     font-weight: 500;
     cursor: pointer;
   }

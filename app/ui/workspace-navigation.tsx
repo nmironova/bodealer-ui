@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ThemeSelector from "./theme-selector";
 
 const destinations = [
   { key: "dashboard", href: "/dashboard", label: "Dashboard" },
@@ -44,11 +45,14 @@ export default function WorkspaceNavigation({
             </Link>
           ))}
       </nav>
-      <form action="/logout" method="post" className="ml-auto">
-        <button className="cursor-pointer rounded-lg px-3 py-2 hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-          Sign out
-        </button>
-      </form>
+      <div className="navigation-account">
+        <ThemeSelector />
+        <form action="/logout" method="post">
+          <button className="cursor-pointer rounded-lg px-3 py-2 hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+            Sign out
+          </button>
+        </form>
+      </div>
     </header>
   );
 }

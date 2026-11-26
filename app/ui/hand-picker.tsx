@@ -4,10 +4,10 @@ import { useMemo, useState } from "react";
 import EditorSection from "./editor-section";
 
 const SUITS = [
-  { key: "S", symbol: "♠", name: "Spades", color: "text-gray-900" },
-  { key: "H", symbol: "♥", name: "Hearts", color: "text-red-600" },
-  { key: "D", symbol: "♦", name: "Diamonds", color: "text-red-600" },
-  { key: "C", symbol: "♣", name: "Clubs", color: "text-gray-900" },
+  { key: "S", symbol: "♠", name: "Spades", color: "suit-black" },
+  { key: "H", symbol: "♥", name: "Hearts", color: "suit-red" },
+  { key: "D", symbol: "♦", name: "Diamonds", color: "suit-red" },
+  { key: "C", symbol: "♣", name: "Clubs", color: "suit-black" },
 ] as const;
 
 const RANKS = [

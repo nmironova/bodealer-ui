@@ -1,6 +1,6 @@
 # Bodealer UI project context
 
-Last reviewed: 2026-11-21. This document records verified implementation details and decisions from the project conversation. Check the source when behavior changes.
+Last reviewed: 2026-11-26. This document records verified implementation details and decisions from the project conversation. Check the source when behavior changes.
 
 ## Purpose and design decisions
 
@@ -78,6 +78,18 @@ The shared-password beta is implemented without accounts, a database, or OAuth. 
 - `instrumentation.ts` validates production configuration during server initialization. No auth bypass is provided for local development.
 - Local login/submission counters are bounded, per-process safeguards only. Production-wide limits must be configured in Vercel Firewall as documented in README; no external infrastructure has been provisioned.
 - Synthetic credentials in `tests/fixtures/test-env.mjs` are test-only values. The test harness uses a fake backend, never the VPS.
+
+## Color themes
+
+Light, Dark, and System are available through a shared native select in the workspace navigation and below the login form. System is the default and follows live `prefers-color-scheme` changes. An explicit preference is saved locally under `bodealer-theme`, synchronized between tabs, and independent of analysis settings and board files. Storage failures fall back to an in-memory preference for the current page.
+
+`app/layout.tsx` sets the resolved `data-theme` before body rendering using a small static head script, preventing a light flash for stored dark preferences. The root `ThemeSync` keeps the theme current across all routes; `theme-selector.tsx` uses the browser preference as an external store, with a deterministic server snapshot. The hydration effect reads the real browser preference rather than temporarily applying the server snapshot.
+
+`globals.css` defines the dark semantic palette and native `color-scheme`. CSS modules use shared surface/text/border/status/focus variables with their original light colors as fallbacks. Existing Tailwind editor utilities map to the same dark palette. Navigation and terminal/code output keep their deliberately dark palettes in both modes. No additional theme library or backend changes were introduced.
+
+Hearts/diamonds remain red, with a brighter red for contrast in dark mode. Spades/clubs use light text in dark mode. Shared suit classes cover the hand picker, restriction labels, contract buttons, and summary symbols; `suit-text.tsx` colors symbols in summaries without changing their text or configuration serialization.
+
+Theme tests cover persistence, cross-tab synchronization, live system changes, pre-hydration application, unavailable storage, desktop/mobile layouts, suit colors, login errors, drawers, and retention of settings/results while switching. Synthetic screenshots are written under `artifacts/theme/`.
 
 ## Live upload preview
 
