@@ -83,6 +83,8 @@ The shared-password beta is implemented without accounts, a database, or OAuth. 
 
 Light, Dark, and System are available through a shared native select in the workspace navigation and below the login form. System is the default and follows live `prefers-color-scheme` changes. An explicit preference is saved locally under `bodealer-theme`, synchronized between tabs, and independent of analysis settings and board files. Storage failures fall back to an in-memory preference for the current page.
 
+`app/lib/theme.ts` owns the theme values/type, default, storage/event keys, media query, and startup script generated from those constants. CSS selectors retain literal `data-theme="dark"` because CSS cannot import TypeScript constants.
+
 `app/layout.tsx` sets the resolved `data-theme` before body rendering using a small static head script, preventing a light flash for stored dark preferences. The root `ThemeSync` keeps the theme current across all routes; `theme-selector.tsx` uses the browser preference as an external store, with a deterministic server snapshot. The hydration effect reads the real browser preference rather than temporarily applying the server snapshot.
 
 `globals.css` defines the dark semantic palette and native `color-scheme`. CSS modules use shared surface/text/border/status/focus variables with their original light colors as fallbacks. Existing Tailwind editor utilities map to the same dark palette. Navigation and terminal/code output keep their deliberately dark palettes in both modes. No additional theme library or backend changes were introduced.

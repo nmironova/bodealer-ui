@@ -2,13 +2,21 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 
-type Theme = "light" | "dark" | "system";
-let fallback: Theme = "system";
+import {
+  THEME,
+  DEFAULT_THEME,
+  THEME_STORAGE_KEY,
+  THEME_CHANGE_EVENT,
+  DARK_THEME_QUERY,
+  parseTheme,
+  type Theme,
+} from "../lib/theme";
+let fallback: Theme = DEFAULT_THEME;
 
 function preference(): Theme {
   try {
-    const value = localStorage.getItem("bodealer-theme");
-    return value === "light" || value === "dark" ? value : "system";
+    const value = localStorage.getItem(THEME_STORAGE_KEY);
+    return parseTheme(value);
   } catch {
     return fallback;
   }
@@ -16,25 +24,25 @@ function preference(): Theme {
 
 function apply(theme: Theme) {
   document.documentElement.dataset.theme =
-    theme === "system"
-      ? matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light"
+    theme === THEME.SYSTEM
+      ? matchMedia(DARK_THEME_QUERY).matches
+        ? THEME.DARK
+        : THEME.LIGHT
       : theme;
 }
 
 function subscribe(update: () => void) {
-  const media = matchMedia("(prefers-color-scheme: dark)");
+  const media = matchMedia(DARK_THEME_QUERY);
   const refresh = () => {
     apply(preference());
     update();
   };
   window.addEventListener("storage", refresh);
-  window.addEventListener("bodealer-theme-change", refresh);
+  window.addEventListener(THEME_CHANGE_EVENT, refresh);
   media.addEventListener("change", refresh);
   return () => {
     window.removeEventListener("storage", refresh);
-    window.removeEventListener("bodealer-theme-change", refresh);
+    window.removeEventListener(THEME_CHANGE_EVENT, refresh);
     media.removeEventListener("change", refresh);
   };
 }
@@ -43,7 +51,7 @@ export function ThemeSync() {
   const theme = useSyncExternalStore(
     subscribe,
     preference,
-    () => "system" as Theme,
+    () => DEFAULT_THEME,
   );
   useEffect(() => apply(preference()), [theme]);
   return null;
@@ -53,7 +61,7 @@ export default function ThemeSelector() {
   const theme = useSyncExternalStore(
     subscribe,
     preference,
-    () => "system" as Theme,
+    () => DEFAULT_THEME,
   );
   return (
     <label className="theme-selector">
@@ -62,20 +70,20 @@ export default function ThemeSelector() {
         aria-label="Color theme"
         value={theme}
         onChange={(event) => {
-          const value = event.target.value as Theme;
+          const value = parseTheme(event.target.value);
           fallback = value;
           try {
-            localStorage.setItem("bodealer-theme", value);
+            localStorage.setItem(THEME_STORAGE_KEY, value);
           } catch {
             /* Keep the preference for this page when storage is unavailable. */
           }
           apply(value);
-          window.dispatchEvent(new Event("bodealer-theme-change"));
+          window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
         }}
       >
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-        <option value="system">System</option>
+        <option value={THEME.LIGHT}>Light</option>
+        <option value={THEME.DARK}>Dark</option>
+        <option value={THEME.SYSTEM}>System</option>
       </select>
     </label>
   );

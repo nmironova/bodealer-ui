@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { THEME_INIT_SCRIPT } from "./lib/theme";
 import { ThemeSync } from "./ui/theme-selector";
 
 const geistSans = Geist({
@@ -28,7 +29,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var t='system';try{t=localStorage.getItem('bodealer-theme')||'system'}catch(e){}document.documentElement.dataset.theme=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'})()`,
+            __html: THEME_INIT_SCRIPT,
           }}
         />
       </head>
