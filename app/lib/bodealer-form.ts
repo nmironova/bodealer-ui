@@ -249,6 +249,10 @@ function buildPlayerRestrictions(
   );
 
   const noSixCardSuit = readCheckbox(formData, `${prefix}.noSixCardSuit`);
+  const noOvercall =
+    prefix === "lho" || prefix === "rho"
+      ? readCheckbox(formData, `${prefix}.noOvercall`)
+      : undefined;
 
   const hcp = buildRange(hcpMin, hcpMax);
 
@@ -269,7 +273,7 @@ function buildPlayerRestrictions(
   const hasSuitPoints = Object.values(suitPoints).some(Boolean);
   const shape = noSixCardSuit ? { noSixCardSuit: true } : undefined;
 
-  if (!hcp && !hasSuitLengths && !hasSuitPoints && !shape) {
+  if (!hcp && !hasSuitLengths && !hasSuitPoints && !shape && !noOvercall) {
     return undefined;
   }
 
@@ -278,6 +282,7 @@ function buildPlayerRestrictions(
     suitLengths: hasSuitLengths ? suitLengths : undefined,
     suitPoints: hasSuitPoints ? suitPoints : undefined,
     shape,
+    noOvercall,
   };
 }
 

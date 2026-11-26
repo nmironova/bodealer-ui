@@ -22,7 +22,8 @@ const SIMPLE_FIELDS = new Set([
 
 const RESTRICTION_FIELD =
   /^(partner|lho|rho)\.(hcp|spades|hearts|diamonds|clubs|spadesPoints|heartsPoints|diamondsPoints|clubsPoints)(Min|Max)$/;
-const RESTRICTION_FLAG = /^(partner|lho|rho)\.noSixCardSuit$/;
+const RESTRICTION_FLAG =
+  /^(?:(partner|lho|rho)\.noSixCardSuit|(lho|rho)\.noOvercall)$/;
 
 function isSupportedField(name: string) {
   return (

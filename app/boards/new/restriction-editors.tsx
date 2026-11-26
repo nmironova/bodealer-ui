@@ -169,6 +169,12 @@ export function restrictionSummary(
   if (values[`${prefix}.noSixCardSuit`] === "true") {
     chips.push("No 6+ suit");
   }
+  if (
+    (prefix === "lho" || prefix === "rho") &&
+    values[`${prefix}.noOvercall`] === "true"
+  ) {
+    chips.push("No overcall");
+  }
 
   return chips;
 }
@@ -295,6 +301,24 @@ export function RestrictionBlock({
           />
           No 6+ card suit
         </label>
+        {(prefix === "lho" || prefix === "rho") && (
+          <label className="opponent-option flex items-center gap-2 text-sm text-gray-900">
+            <input
+              type="checkbox"
+              name={`${prefix}.noOvercall`}
+              value="true"
+              checked={values[`${prefix}.noOvercall`] === "true"}
+              onChange={(event) =>
+                onValueChange(
+                  `${prefix}.noOvercall`,
+                  event.target.checked ? "true" : "",
+                )
+              }
+              className="rounded border-gray-300 text-blue-600"
+            />
+            No overcall
+          </label>
+        )}
       </div>
     </details>
   );

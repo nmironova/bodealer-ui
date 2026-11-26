@@ -289,7 +289,7 @@ export default function NewBoardForm() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".json,.bodealer.json,application/json"
+            accept=".json"
             className="sr-only"
             onChange={(event) => {
               const file = event.target.files?.[0];

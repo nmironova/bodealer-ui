@@ -310,3 +310,54 @@ test("running task can be cancelled from the mobile Results view", async ({
     page.getByRole("button", { name: "Run again", exact: true }),
   ).toBeEnabled();
 });
+
+test("opponent No overcall checkboxes swap, save/load, summarize and reach the uploaded config", async ({
+  page,
+}) => {
+  await loadBoard(page, "Opponent overcalls");
+  const east = page.locator("#restriction-lho");
+  const west = page.locator("#restriction-rho");
+  await east.locator(":scope > summary").click();
+  await east.getByLabel("No overcall", { exact: true }).check();
+  await east.locator('input[name="lho.hcpMin"]').fill("6");
+  await expect(
+    west.getByLabel("No overcall", { exact: true }),
+  ).not.toBeChecked();
+  await expect(
+    page
+      .locator("#restriction-partner")
+      .getByLabel("No overcall", { exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Swap LHO ↔ RHO" }).click();
+  await expect(page.locator('input[name="rho.noOvercall"]')).toBeChecked();
+  await expect(page.locator('input[name="lho.noOvercall"]')).not.toBeChecked();
+  const downloaded = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  const path = (await (await downloaded).path())!;
+  const saved = JSON.parse(await readFile(path, "utf8"));
+  expect(saved.values["rho.noOvercall"]).toBe("true");
+  expect(saved.values["lho.noOvercall"]).toBeUndefined();
+  await page.getByRole("button", { name: "Clear", exact: true }).click();
+  await page.locator('input[type="file"]').setInputFiles(path);
+  await expect(page.locator('input[name="rho.noOvercall"]')).toBeChecked();
+  await page.getByRole("button", { name: "Run analysis", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Analysis complete", exact: true }),
+  ).toBeVisible({ timeout: 15000 });
+  await expect(
+    page.getByRole("button", {
+      name: "Edit West (RHO) restrictions",
+      exact: true,
+    }),
+  ).toContainText("No overcall");
+  const requests = await (
+    await fetch(`${testEnvironment.BODEALER_API_URL}/__test__/requests`)
+  ).json();
+  const upload = requests.find(
+    (request: { method: string; body: string }) =>
+      request.method === "POST" &&
+      request.body.includes("TASK NAME:Opponent overcalls"),
+  );
+  expect(upload.body).toContain("WEST: NoOvercall");
+  expect(upload.body).not.toContain("EAST: NoOvercall");
+});
