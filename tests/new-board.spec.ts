@@ -78,7 +78,7 @@ test("desktop initial setup shows hand, restrictions, calculation and the run ac
     page.getByRole("heading", { name: "Calculation", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Run analysis", exact: true }),
+    page.getByRole("button", { name: "Run analysis", exact: true }).last(),
   ).toBeInViewport();
 });
 

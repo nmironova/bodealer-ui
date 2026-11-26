@@ -471,6 +471,7 @@
 .runBar {
   margin-top: 18px;
 }
+.fileActions .runButton,
 .runButton,
 .mobileEdit {
   display: flex;
@@ -488,6 +489,7 @@
   font-weight: 600;
   cursor: pointer;
 }
+.fileActions .runButton:hover:enabled,
 .runButton:hover:enabled,
 .mobileEdit:hover {
   background: #0856d9;
@@ -847,4 +849,8 @@
   .workspace :global(.restriction-row > div > .mb-3) {
     bottom: 15px;
   }
+}
+
+.workspace :global(.hand-section[data-collapsed="true"] .hand-layout) {
+  grid-template-columns: minmax(0, 1fr);
 }

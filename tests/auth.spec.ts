@@ -201,7 +201,7 @@ test("form action submits multipart config promptly, polls output, and never put
       ),
     ),
   });
-  await page.getByRole("button", { name: "Run analysis" }).click();
+  await page.getByRole("button", { name: "Run analysis" }).last().click();
   await expect(page.locator(".walrus-console").first()).toContainText(
     "Partial Walrus output",
     { timeout: 15000 },
@@ -246,7 +246,10 @@ test("form action submits multipart config promptly, polls output, and never put
   ).toBeVisible();
   // A previously rendered server action cannot be used after the session is removed.
   await context.clearCookies();
-  await page.getByRole("button", { name: "Run again", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Run again", exact: true })
+    .last()
+    .click();
   await expect(page).toHaveURL(`${testBaseURL}/login`);
 });
 

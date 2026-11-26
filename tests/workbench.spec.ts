@@ -31,7 +31,7 @@ test("initial hand stays vertical and invalid ranges/incomplete hands block exec
   ).toHaveAttribute("aria-pressed", "true");
   await spades.getByRole("button", { name: "Spades 10", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Run analysis", exact: true }),
+    page.getByRole("button", { name: "Run analysis", exact: true }).last(),
   ).toBeDisabled();
   await expect(
     page.getByRole("alert").filter({ hasText: "exactly 13 valid" }),
@@ -43,7 +43,7 @@ test("initial hand stays vertical and invalid ranges/incomplete hands block exec
     page.getByText("Minimum must not exceed maximum."),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Run analysis", exact: true }),
+    page.getByRole("button", { name: "Run analysis", exact: true }).last(),
   ).toBeDisabled();
   await expect(
     page.getByRole("alert").filter({ hasText: "cannot be greater" }),
@@ -60,7 +60,11 @@ test("workbench editing preserves output, closed-drawer values save, and rerun u
     path: "artifacts/workbench/desktop-setup.png",
     fullPage: true,
   });
-  await page.getByRole("button", { name: "Run analysis", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Run analysis", exact: true })
+    .last()
+    .last()
+    .click();
   await expect(
     page.getByRole("heading", { name: "Analysis complete", exact: true }),
   ).toBeVisible({ timeout: 15000 });
@@ -128,7 +132,11 @@ test("workbench editing preserves output, closed-drawer values save, and rerun u
   expect(saved.values["partner.hcpMin"]).toBe("15");
   expect(saved.values.contractStrain).toBe("NT");
   expect(saved.values.contractDeclarer).toBe("N");
-  await page.getByRole("button", { name: "Run again", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Run again", exact: true })
+    .last()
+    .last()
+    .click();
   await expect(
     page.getByRole("heading", { name: "Analysis complete", exact: true }),
   ).toBeVisible({ timeout: 15000 });
@@ -177,7 +185,11 @@ test("mobile Setup/Results tabs preserve long raw output, Copy/Expand and hand d
     route.fulfill({ json: { status: "completed", resultText: raw } }),
   );
   await loadBoard(page, "Mobile workbench");
-  await page.getByRole("button", { name: "Run analysis", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Run analysis", exact: true })
+    .last()
+    .last()
+    .click();
   await expect(
     page.getByRole("tab", { name: "Results", exact: true }),
   ).toHaveAttribute("aria-selected", "true");
@@ -299,7 +311,11 @@ test("running task can be cancelled from the mobile Results view", async ({
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await loadBoard(page, "Cancellation example");
-  await page.getByRole("button", { name: "Run analysis", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Run analysis", exact: true })
+    .last()
+    .last()
+    .click();
   const cancel = page.getByRole("button", { name: "Cancel task", exact: true });
   await expect(cancel).toBeVisible();
   await expect(
@@ -311,7 +327,7 @@ test("running task can be cancelled from the mobile Results view", async ({
   ).toBeVisible();
   await page.getByRole("tab", { name: "Setup", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Run again", exact: true }),
+    page.getByRole("button", { name: "Run again", exact: true }).last(),
   ).toBeEnabled();
 });
 
@@ -344,7 +360,11 @@ test("opponent No overcall checkboxes swap, save/load, summarize and reach the u
   await page.getByRole("button", { name: "Clear", exact: true }).click();
   await page.locator('input[type="file"]').setInputFiles(path);
   await expect(page.locator('input[name="rho.noOvercall"]')).toBeChecked();
-  await page.getByRole("button", { name: "Run analysis", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Run analysis", exact: true })
+    .last()
+    .last()
+    .click();
   await expect(
     page.getByRole("heading", { name: "Analysis complete", exact: true }),
   ).toBeVisible({ timeout: 15000 });

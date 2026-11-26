@@ -10,6 +10,8 @@ The current analysis page follows the hybrid workbench proposals in `docs/design
 
 Clear was subsequently added beside Load and Save. It clears board details, hand, restrictions, and combinations and restores calculation defaults. Previous results remain visible. It does not cancel a running task.
 
+The Run action is available both beside View config/Load/Save/Clear and in its original position below setup. Both render the same button definition, target the same form, and share validation, pending, running, and cancellation disabled states. In initial setup, a complete hand's editor stays open until focus or a pointer interaction moves outside the hand section. Hide cards also collapses it explicitly; Edit hand or the hand summary reopens it inline. Incomplete/invalid hands do not auto-collapse. The editor remains mounted, preserving hidden hand input values for submission and Save. Workbench editing still uses the existing drawer.
+
 ## Stack and repository layout
 
 The Git repository and application root are the directory containing this file's parent `docs/`, `package.json`, and `app/`. In the current workspace this is the nested `bodealer-ui/` directory, not its enclosing workspace folder.
@@ -91,7 +93,7 @@ Light, Dark, and System are available through a shared native select in the work
 
 Hearts/diamonds remain red, with a brighter red for contrast in dark mode. Spades/clubs use light text in dark mode. Shared suit classes cover the hand picker, restriction labels, contract buttons, and summary symbols; `suit-text.tsx` colors symbols in summaries without changing their text or configuration serialization.
 
-Theme tests cover persistence, cross-tab synchronization, live system changes, pre-hydration application, unavailable storage, desktop/mobile layouts, suit colors, login errors, drawers, and retention of settings/results while switching. Synthetic screenshots are written under `artifacts/theme/`.
+Theme tests cover persistence, cross-tab synchronization, live system changes, pre-hydration application, unavailable storage, desktop/mobile layouts, suit colors, login errors, drawers, and retention of settings/results while switching. Synthetic screenshots are written under `artifacts/theme/`. The results summary uses a semantic surface in `results-panel.module.css` rather than an opacity-modified Tailwind background, so starting/running/completed notes and task IDs retain readable contrast in dark mode.
 
 ## Live upload preview
 

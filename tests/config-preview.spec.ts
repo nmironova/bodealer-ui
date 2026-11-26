@@ -53,6 +53,7 @@ for (const width of [1536, 390]) {
     await viewer.getByRole("button", { name: "Close config preview" }).click();
     await page
       .getByRole("button", { name: "Run analysis", exact: true })
+      .last()
       .click();
     await expect(
       page.getByRole("heading", { name: "Analysis complete", exact: true }),
@@ -90,7 +91,7 @@ test("invalid values block preview and submission without rounding", async ({
   ).toBeDisabled();
   await viewer.getByRole("button", { name: "Close config preview" }).click();
   await expect(
-    page.getByRole("button", { name: "Run analysis", exact: true }),
+    page.getByRole("button", { name: "Run analysis", exact: true }).last(),
   ).toBeDisabled();
   for (const [key, value] of [
     ["boardsK", "1.5"],
@@ -162,7 +163,7 @@ test("preview regenerates for every configuration category and Clear", async ({
   await page.getByRole("button", { name: "Close config preview" }).click();
   await page.getByRole("button", { name: "Clear", exact: true }).click();
   await expect(
-    page.getByRole("button", { name: "Run analysis", exact: true }),
+    page.getByRole("button", { name: "Run analysis", exact: true }).last(),
   ).toBeDisabled();
   await page.getByRole("button", { name: "View config", exact: true }).click();
   await expect(page.getByLabel("Server config payload")).toHaveCount(0);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import styles from "./results-panel.module.css";
 import {
   TASK_STATUS,
   type TaskStatus,
@@ -131,7 +132,9 @@ export default function ResultsPanel({
           configuration. Run again to update.
         </p>
       )}
-      <div className="my-4 rounded-lg border border-slate-200 bg-slate-50/70 p-4">
+      <div
+        className={`${styles.summary} my-4 rounded-lg border border-slate-200 p-4`}
+      >
         <h3 className="font-semibold text-slate-900">
           {starting
             ? "Preparing your analysis"

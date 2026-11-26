@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 export function FieldError({ errors }: { errors?: string[] }) {
   if (!errors?.length) return null;
@@ -23,6 +23,7 @@ type Props = {
     editorId: string,
   ) => ReactNode;
   keepSummaryInline?: boolean;
+  collapseOnLeave?: boolean;
   children: ReactNode;
 };
 
@@ -34,9 +35,25 @@ export default function EditorSection({
   badge,
   summary,
   keepSummaryInline = false,
+  collapseOnLeave = false,
   children,
 }: Props) {
+  const section = useRef<HTMLElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
+  const [collapsed, setCollapsed] = useState(false);
+  const inlineCollapsed = !compact && collapseOnLeave && collapsed;
+  useEffect(() => {
+    if (compact || !collapseOnLeave) return;
+    function leave(event: PointerEvent) {
+      if (
+        event.target instanceof Node &&
+        !section.current?.contains(event.target)
+      )
+        setCollapsed(true);
+    }
+    document.addEventListener("pointerdown", leave);
+    return () => document.removeEventListener("pointerdown", leave);
+  }, [compact, collapseOnLeave]);
   const id = useId();
   const titleId = useId();
   const [expanded, setExpanded] = useState(false);
@@ -53,37 +70,56 @@ export default function EditorSection({
         )
         ?.focus();
     } else {
+      setCollapsed(false);
+      element.open = true;
       element
         .querySelector<HTMLInputElement>("input:not([type=hidden])")
         ?.focus();
     }
   }
   return (
-    <section className={`work-section ${className}`} aria-labelledby={titleId}>
+    <section
+      ref={section}
+      className={`work-section ${className}`}
+      data-collapsed={inlineCollapsed}
+      aria-labelledby={titleId}
+      onBlur={(event) => {
+        if (
+          !compact &&
+          collapseOnLeave &&
+          event.relatedTarget instanceof Node &&
+          !event.currentTarget.contains(event.relatedTarget)
+        )
+          setCollapsed(true);
+      }}
+    >
       <header className="section-heading">
         <h2 id={titleId}>{title}</h2>
         <div className="section-heading-actions">
           {badge}
-          {compact && (
+          {(compact || collapseOnLeave) && (
             <button
               type="button"
               className="edit-action"
-              onClick={open}
+              onClick={() => {
+                if (!compact && !inlineCollapsed) setCollapsed(true);
+                else open();
+              }}
               aria-controls={id}
-              aria-expanded={expanded}
+              aria-expanded={compact ? expanded : !inlineCollapsed}
             >
-              {editLabel}
+              {!compact && !inlineCollapsed ? "Hide cards" : editLabel}
             </button>
           )}
         </div>
       </header>
       <div className={keepSummaryInline ? "hand-layout" : undefined}>
         {(compact || keepSummaryInline) &&
-          summary?.(open, !compact || expanded, id)}
+          summary?.(open, compact ? expanded : !inlineCollapsed, id)}
         <dialog
           ref={dialog}
           id={id}
-          open={!compact}
+          open={!compact && !inlineCollapsed}
           role={compact ? "dialog" : "group"}
           className={`section-editor ${compact ? "editor-drawer" : "editor-inline"}`}
           aria-label={editLabel}

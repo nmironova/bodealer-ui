@@ -191,6 +191,7 @@ export default function HandPicker({
       compact={compact}
       editLabel="Edit hand"
       className="hand-section"
+      collapseOnLeave={isCompleteHandText(handTextInput)}
       keepSummaryInline
       badge={
         <span

@@ -3,6 +3,7 @@
 import {
   useActionState,
   useCallback,
+  useId,
   useRef,
   useState,
   type FormEvent,
@@ -90,6 +91,7 @@ export default function NewBoardForm() {
   );
   const configText = prepared.configText;
   const [submitErrors, setSubmitErrors] = useState<string[]>([]);
+  const formId = useId();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -250,6 +252,18 @@ export default function NewBoardForm() {
     setActiveTab("results");
   }
 
+  const runButton = (
+    <button
+      type="submit"
+      form={formId}
+      disabled={pending || isTaskRunning || isCancelling || !configText}
+      className={styles.runButton}
+    >
+      {pending ? "Starting…" : compact ? "Run again" : "Run analysis"}
+      <span aria-hidden="true">{compact ? "↻" : "▶"}</span>
+    </button>
+  );
+
   return (
     <div
       className={`${styles.workspace} ${compact ? styles.workbench : styles.initial}`}
@@ -269,6 +283,7 @@ export default function NewBoardForm() {
           </p>
         </div>
         <div className={styles.fileActions}>
+          {runButton}
           <input
             ref={fileInputRef}
             type="file"
@@ -387,6 +402,7 @@ export default function NewBoardForm() {
         </button>
       </div>
       <form
+        id={formId}
         ref={formRef}
         action={formAction}
         noValidate
@@ -490,14 +506,7 @@ export default function NewBoardForm() {
             {compact && stale && (
               <p className={styles.modified}>Settings modified</p>
             )}
-            <button
-              type="submit"
-              disabled={pending || isTaskRunning || isCancelling || !configText}
-              className={styles.runButton}
-            >
-              {pending ? "Starting…" : compact ? "Run again" : "Run analysis"}
-              <span aria-hidden="true">{compact ? "↻" : "▶"}</span>
-            </button>
+            {runButton}
             {!compact && (
               <p className={styles.runHint}>
                 Select 13 cards and give your analysis a name to get started.
