@@ -1,5 +1,6 @@
 "use client";
 
+import SuitText from "../../ui/suit-text";
 import { useState } from "react";
 import EditorSection from "../../ui/editor-section";
 import {
@@ -64,8 +65,10 @@ export default function RestrictionsPanel({
             >
               <strong>{player.short}</strong>
               <span>
-                {restrictionSummary(values, player.prefix).join(" · ") ||
-                  "No restrictions"}
+                <SuitText>
+                  {restrictionSummary(values, player.prefix).join(" · ") ||
+                    "No restrictions"}
+                </SuitText>
               </span>
               <span className="summary-arrow" aria-hidden="true">
                 ›

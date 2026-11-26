@@ -2,7 +2,7 @@
   max-width: 1600px;
   margin: 0 auto;
   padding: 38px clamp(20px, 3.6vw, 58px) 40px;
-  color: #101a2c;
+  color: var(--text, #101a2c);
 }
 .navigation {
   flex-wrap: wrap;
@@ -10,7 +10,7 @@
 .navigation a:focus-visible,
 .page a:focus-visible,
 .page button:focus-visible {
-  outline: 2px solid #3982ff;
+  outline: 2px solid var(--focus, #3982ff);
   outline-offset: 4px;
 }
 .welcome {
@@ -29,7 +29,7 @@
 }
 .welcome p {
   margin: 10px 0 0;
-  color: #53627b;
+  color: var(--muted, #53627b);
   font-size: 15px;
   line-height: 1.6;
 }
@@ -67,9 +67,9 @@
   align-items: flex-start;
   gap: 22px;
   padding: 24px;
-  border: 1px solid #dfe5ef;
+  border: 1px solid var(--border, #dfe5ef);
   border-radius: 16px;
-  background: white;
+  background: var(--surface, white);
   box-shadow: 0 2px 4px #19315508;
 }
 .summaryIcon {
@@ -82,16 +82,16 @@
   border-radius: 14px;
 }
 .running {
-  color: #199d4e;
-  background: #edf9f0;
+  color: var(--success, #199d4e);
+  background: var(--success-bg, #edf9f0);
 }
 .queued {
-  color: #2780ed;
-  background: #edf4ff;
+  color: var(--link, #2780ed);
+  background: var(--accent-bg, #edf4ff);
 }
 .completed {
-  color: #6450ed;
-  background: #f1eeff;
+  color: var(--violet, #6450ed);
+  background: var(--violet-bg, #f1eeff);
 }
 .summaryTitle {
   margin: 1px 0 0;
@@ -108,15 +108,15 @@
 }
 .summaryDescription {
   margin: 0;
-  color: #748094;
+  color: var(--muted, #748094);
   font-size: 14px;
   line-height: 1.5;
 }
 .recent {
   padding: 20px;
-  border: 1px solid #dfe5ef;
+  border: 1px solid var(--border, #dfe5ef);
   border-radius: 16px;
-  background: white;
+  background: var(--surface, white);
   box-shadow: 0 2px 4px #19315508;
 }
 .recentHeader {
@@ -136,12 +136,12 @@
   letter-spacing: -0.5px;
 }
 .recentHeader h2 svg {
-  color: #526989;
+  color: var(--muted, #526989);
   flex-shrink: 0;
 }
 .textLink {
   flex-shrink: 0;
-  color: #075ff6;
+  color: var(--link, #075ff6);
   font-size: 14px;
 }
 .textLink:hover {
@@ -154,14 +154,14 @@
   justify-content: center;
   min-height: 284px;
   padding: 30px 16px;
-  border: 1px solid #e4eaf3;
+  border: 1px solid var(--border, #e4eaf3);
   border-radius: 11px;
-  background: #fafbfe;
+  background: var(--surface-muted, #fafbfe);
   text-align: center;
 }
 .stateIcon {
   display: flex;
-  color: #a7b8d1;
+  color: var(--muted, #a7b8d1);
   margin-bottom: 18px;
 }
 .statePanel h3 {
@@ -172,7 +172,7 @@
 }
 .statePanel p {
   margin: 9px 0 0;
-  color: #748094;
+  color: var(--muted, #748094);
   font-size: 15px;
   line-height: 1.6;
 }
@@ -184,16 +184,16 @@
   margin-top: 22px;
   padding: 10px 16px;
   min-height: 42px;
-  border: 1px solid #d0e0ff;
+  border: 1px solid var(--border, #d0e0ff);
   border-radius: 999px;
-  background: #ebf2ff;
-  color: #075ff6;
+  background: var(--accent-bg, #ebf2ff);
+  color: var(--link, #075ff6);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
 }
 .secondaryAction:hover {
-  background: #dfeaff;
+  background: var(--accent-bg, #dfeaff);
 }
 .plusBubble {
   display: inline-flex;
@@ -202,7 +202,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: white;
+  background: var(--surface, white);
   font-size: 24px;
   line-height: 1;
   font-weight: 400;
@@ -211,7 +211,7 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 1px solid #e4eaf3;
+  border: 1px solid var(--border, #e4eaf3);
   border-radius: 11px;
   overflow: hidden;
 }
@@ -221,7 +221,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 18px 20px;
-  border-bottom: 1px solid #edf0f6;
+  border-bottom: 1px solid var(--border, #edf0f6);
 }
 .taskRow:last-child {
   border-bottom: 0;
@@ -239,10 +239,10 @@
   width: 36px;
   height: 40px;
   flex-shrink: 0;
-  border: 1px solid #e2e9f3;
+  border: 1px solid var(--border, #e2e9f3);
   border-radius: 7px;
-  color: #526989;
-  background: #fafbfe;
+  color: var(--muted, #526989);
+  background: var(--surface-muted, #fafbfe);
   font-size: 22px;
 }
 .taskName h3 {
@@ -253,7 +253,7 @@
 .taskName time {
   display: block;
   margin-top: 5px;
-  color: #748094;
+  color: var(--muted, #748094);
   font-size: 13px;
 }
 .status {
@@ -264,12 +264,12 @@
   font-weight: 500;
 }
 .failed {
-  color: #b03548;
-  background: #fff0f2;
+  color: var(--danger, #b03548);
+  background: var(--danger-bg, #fff0f2);
 }
 .cancelled {
-  color: #67748a;
-  background: #f0f2f6;
+  color: var(--muted, #67748a);
+  background: var(--surface-muted, #f0f2f6);
 }
 @media (max-width: 1000px) {
   .summaryCard {

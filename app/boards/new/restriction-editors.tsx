@@ -1,5 +1,7 @@
 "use client";
 
+import SuitText from "../../ui/suit-text";
+
 import type {
   AdvancedCombinationFilter,
   AnyInListBelowFilter,
@@ -81,8 +83,8 @@ function RangeRow({
             className={[
               "w-4 text-center text-base leading-none",
               field.key.startsWith("hearts") || field.key.startsWith("diamonds")
-                ? "text-red-600"
-                : "text-gray-950",
+                ? "suit-red"
+                : "suit-black",
             ].join(" ")}
           >
             {field.symbol}
@@ -222,7 +224,7 @@ export function RestrictionBlock({
                     key={item}
                     className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-xs font-medium text-gray-700"
                   >
-                    {item}
+                    <SuitText>{item}</SuitText>
                   </span>
                 ))
               ) : (

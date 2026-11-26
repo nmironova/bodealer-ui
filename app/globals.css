@@ -20,6 +20,7 @@ body {
 
 .analysis-nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: clamp(24px, 5vw, 80px);
   padding: 10px clamp(16px, 4vw, 64px);
@@ -45,13 +46,13 @@ body {
 }
 .output-action {
   border-radius: 5px;
-  color: #334155;
+  color: var(--text, #334155);
   padding: 3px 5px;
   cursor: pointer;
 }
 .output-action:hover {
-  background: #eff6ff;
-  color: #155dfc;
+  background: var(--accent-bg, #eff6ff);
+  color: var(--link, #155dfc);
 }
 .output-action:disabled {
   opacity: 0.4;
@@ -62,11 +63,11 @@ body {
   width: 94vw;
   max-width: 1500px;
   max-height: 94dvh;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border, #cbd5e1);
   border-radius: 12px;
   padding: 20px;
-  background: #f8fafc;
-  color: #0f172a;
+  background: var(--surface-muted, #f8fafc);
+  color: var(--text, #0f172a);
 }
 .output-dialog::backdrop {
   background: #0f172acc;
@@ -76,7 +77,7 @@ body {
   height: 75dvh;
 }
 .analysis-page :is(button, summary, a):focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--focus, #2563eb);
   outline-offset: 3px;
 }
 @media (max-width: 520px) {
@@ -86,5 +87,144 @@ body {
   }
   .analysis-nav nav {
     font-size: 12px;
+  }
+}
+
+/* Semantic colors shared by CSS modules and Tailwind controls. Light values
+   remain at their call sites so the existing light palette stays unchanged. */
+:root {
+  color-scheme: light;
+  --suit-black: #111827;
+  --suit-red: #dc2626;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0d1420;
+  --page-background: #0d1420;
+  --foreground: #e6edf7;
+  --surface: #172131;
+  --surface-muted: #1e2b3e;
+  --text: #e6edf7;
+  --muted: #a9b8cd;
+  --border: #3c506b;
+  --decoration: #334766;
+  --link: #8dbbff;
+  --focus: #82b2ff;
+  --danger: #ff929c;
+  --danger-bg: #3c202c;
+  --warning: #f0c478;
+  --warning-bg: #342b1b;
+  --success: #80dca2;
+  --success-bg: #18382d;
+  --violet: #c2adff;
+  --violet-bg: #302747;
+  --accent-bg: #213958;
+  --suit-black: #e6edf7;
+  --suit-red: #ff757f;
+}
+.suit-black {
+  color: var(--suit-black);
+}
+.suit-red {
+  color: var(--suit-red);
+}
+.navigation-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+.theme-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: inherit;
+}
+.theme-selector select {
+  padding: 6px 9px;
+  border: 1px solid var(--border, #bcc9dc);
+  border-radius: 7px;
+  background: var(--surface, #fff);
+  color: var(--text, #142039);
+  cursor: pointer;
+}
+.theme-selector select:focus-visible {
+  outline: 2px solid var(--focus, #3985ff);
+  outline-offset: 3px;
+}
+.analysis-nav .theme-selector select {
+  background: #25354c;
+  color: #fff;
+  border-color: #526580;
+}
+
+/* Existing utility-based editors use the same semantic palette. Keep
+   primary blue buttons and the navigation's slate-700 active state intact. */
+:root[data-theme="dark"] :is(.bg-white) {
+  background-color: var(--surface);
+}
+:root[data-theme="dark"] :is(.bg-gray-50, .bg-gray-100, .bg-slate-50) {
+  background-color: var(--surface-muted);
+}
+:root[data-theme="dark"]
+  :is(
+    .text-gray-950,
+    .text-gray-900,
+    .text-gray-800,
+    .text-gray-700,
+    .text-slate-950,
+    .text-slate-900
+  ) {
+  color: var(--text);
+}
+:root[data-theme="dark"]
+  :is(
+    .text-gray-600,
+    .text-gray-500,
+    .text-gray-400,
+    .text-slate-500,
+    .text-slate-400
+  ) {
+  color: var(--muted);
+}
+:root[data-theme="dark"]
+  :is(.border-gray-200, .border-gray-300, .border-slate-200) {
+  border-color: var(--border);
+}
+:root[data-theme="dark"] :is(.bg-blue-50, .bg-blue-100) {
+  background-color: var(--accent-bg);
+}
+:root[data-theme="dark"]
+  :is(.text-blue-600, .text-blue-700, .text-blue-800, .text-blue-900) {
+  color: var(--link);
+}
+:root[data-theme="dark"] :is(.border-blue-200, .border-blue-300) {
+  border-color: #426a9b;
+}
+:root[data-theme="dark"] :is(.bg-amber-50, .bg-amber-100) {
+  background-color: var(--warning-bg);
+}
+:root[data-theme="dark"] :is(.text-amber-800, .text-amber-900) {
+  color: var(--warning);
+}
+:root[data-theme="dark"] :is(.border-amber-200, .border-amber-300) {
+  border-color: #79603a;
+}
+:root[data-theme="dark"] :is(.bg-red-50, .bg-red-100) {
+  background-color: var(--danger-bg);
+}
+:root[data-theme="dark"] :is(.text-red-600, .text-red-700) {
+  color: var(--danger);
+}
+:root[data-theme="dark"] .bg-green-100 {
+  background-color: var(--success-bg);
+}
+:root[data-theme="dark"] .text-green-700 {
+  color: var(--success);
+}
+@media (hover: hover) {
+  :root[data-theme="dark"] :is(.hover\:bg-gray-50, .hover\:bg-gray-200):hover {
+    background-color: #293b54;
   }
 }
